@@ -11,15 +11,17 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
   const { sidebarCollapsed, mobilePreviewOpen } = useApp();
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex min-h-screen bg-[#080A0E] text-[#F8FAFC]">
       <Sidebar />
       <div
-        className={`flex-1 flex flex-col transition-all duration-300 ${
-          sidebarCollapsed ? 'ml-[72px]' : 'ml-[260px]'
-        } ${mobilePreviewOpen ? 'mr-[380px]' : ''}`}
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
+          sidebarCollapsed ? 'pl-[74px]' : 'pl-[260px]'
+        } ${mobilePreviewOpen ? 'pr-[390px]' : ''}`}
       >
         <TopBar />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 px-6 xl:px-10 py-6 overflow-y-auto">
+          {children}
+        </main>
       </div>
       <MobilePreviewDrawer />
       <ToastContainer />
