@@ -1,144 +1,262 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import {
-  LayoutDashboard,
-  Flame,
-  Dumbbell,
-  Users,
-  QrCode,
-  Building2,
-  ChevronLeft,
-  ChevronRight,
-  Smartphone,
-  Sparkles,
-} from 'lucide-react';
+import { cn } from '@/lib/cn';
+import { locations, tenantsByVertical, formCheckInbox } from '@/data/mockGravlB2B';
+import { membersInScope, scopeStats } from '@/data/selectors';
+import type { VerticalType } from '@/types/gravl-b2b';
+import { navByVertical, verticalMeta } from './nav';
+import { useSwitchVertical, useVertical } from './useVertical';
+import { Check, ChevronLeft, ChevronRight, ChevronsUpDown, Smartphone, X } from 'lucide-react';
 
-const navItems = [
-  { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard, badge: 'Live' },
-  { href: '/retention', label: 'Retention & Nudges', icon: Flame, badge: '148' },
-  { href: '/locations-equipment', label: 'Equipment & 3D Floor', icon: Dumbbell },
-  { href: '/community', label: 'Community & Retos', icon: Users },
-  { href: '/provisioning', label: 'QR Kit & ROI Billing', icon: QrCode },
-  { href: '/corporate-coach', label: 'Corporate / Coach', icon: Building2 },
-];
+function TenantSwitcher({ collapsed }: { collapsed: boolean }) {
+  const vertical = useVertical();
+  const switchVertical = useSwitchVertical();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const tenant = tenantsByVertical[vertical];
+  const meta = verticalMeta[vertical];
 
-export default function Sidebar() {
-  const { sidebarCollapsed, toggleSidebar, mobilePreviewOpen, setMobilePreviewOpen } = useApp();
-  const pathname = usePathname();
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
 
   return (
-    <aside
-      className={`fixed left-0 top-0 h-screen z-40 flex flex-col transition-all duration-300 select-none ${
-        sidebarCollapsed ? 'w-[74px]' : 'w-[260px]'
-      }`}
-      style={{
-        background: 'linear-gradient(180deg, rgba(14, 18, 25, 0.95) 0%, rgba(9, 12, 17, 0.98) 100%)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        borderRight: '1px solid rgba(255, 255, 255, 0.08)',
-      }}
-    >
-      {/* Brand Header */}
-      <div className="flex items-center gap-3.5 px-5 h-[72px] border-b border-white/[0.07]">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C6FF00] to-[#AEEA00] flex items-center justify-center shadow-[0_0_20px_rgba(198,255,0,0.35)] flex-shrink-0">
-          <span className="text-[#080A0E] font-black text-xl tracking-tighter">G</span>
-        </div>
-        {!sidebarCollapsed && (
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm font-black text-white tracking-widest uppercase">GRAVL</h1>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#C6FF00]/15 text-[#C6FF00] border border-[#C6FF00]/30 tracking-wider">
-                B2B OS
-              </span>
-            </div>
-            <p className="text-[11px] text-[#64748B] font-medium truncate mt-0.5">Enterprise Partner</p>
-          </div>
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Workspace actual: ${tenant.name}. Cambiar workspace`}
+        className={cn(
+          'flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-white/[0.04]',
+          collapsed && 'justify-center',
         )}
+      >
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-black text-gravl-canvas"
+          style={{ background: meta.color, boxShadow: `0 0 18px ${meta.color}55` }}
+        >
+          {tenant.shortName}
+        </span>
+        {!collapsed && (
+          <>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-bold text-white">{tenant.name}</span>
+              <span className="block truncate text-[11px] text-gravl-text-muted">{tenant.subtitle}</span>
+            </span>
+            <ChevronsUpDown size={14} className="shrink-0 text-gravl-text-muted" aria-hidden />
+          </>
+        )}
+      </button>
+
+      {open && (
+        <div role="menu" className="gravl-glass absolute left-0 top-full z-50 mt-2 w-64 animate-slide-up p-1.5">
+          <p className="px-2.5 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">
+            Workspaces de demo
+          </p>
+          {(Object.keys(verticalMeta) as VerticalType[]).map((v) => {
+            const t = tenantsByVertical[v];
+            const m = verticalMeta[v];
+            const Icon = m.icon;
+            const active = v === vertical;
+            return (
+              <button
+                key={v}
+                role="menuitemradio"
+                aria-checked={active}
+                onClick={() => {
+                  setOpen(false);
+                  if (!active) switchVertical(v);
+                }}
+                className={cn(
+                  'flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors',
+                  active ? 'bg-white/[0.06]' : 'hover:bg-white/[0.04]',
+                )}
+              >
+                <Icon size={16} style={{ color: m.color }} aria-hidden />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-semibold text-white">{t.name}</span>
+                  <span className="block truncate text-[10px] text-gravl-text-muted">
+                    {m.label} · Plan {t.plan}
+                  </span>
+                </span>
+                {active && <Check size={14} className="text-gravl-volt" aria-hidden />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+  const { selectedLocationId, getMachineStatus, nudgedAt, mobilePreviewOpen, setMobilePreviewOpen } = useApp();
+  const pathname = usePathname();
+  const vertical = useVertical();
+
+  const badges = useMemo(() => {
+    const stats = scopeStats(selectedLocationId);
+    const maintenance = locations
+      .flatMap((l) => l.equipmentProfile.machines)
+      .filter((m) => getMachineStatus(m) === 'MAINTENANCE').length;
+    return {
+      live: { text: String(stats.liveNow), tone: 'live' as const },
+      atRisk: {
+        text: String(membersInScope(selectedLocationId).filter((m) => m.status === 'AT_RISK' && !nudgedAt[m.userId]).length),
+        tone: 'crimson' as const,
+      },
+      maintenance: maintenance ? { text: String(maintenance), tone: 'amber' as const } : undefined,
+      formChecks: { text: String(formCheckInbox.length), tone: 'amber' as const },
+    };
+  }, [selectedLocationId, getMachineStatus, nudgedAt]);
+
+  return (
+    <>
+      <div className="border-b border-white/[0.07] px-3 py-3">
+        <TenantSwitcher collapsed={collapsed} />
       </div>
 
-      {/* Main Navigation */}
-      <nav className="flex-1 py-5 px-3 space-y-1.5 overflow-y-auto">
-        {!sidebarCollapsed && (
-          <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
-            Platform Modules
-          </p>
-        )}
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || (pathname?.startsWith(item.href + '/') && item.href !== '/');
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3.5 px-3.5 py-3 rounded-xl transition-all duration-200 group relative ${
-                isActive
-                  ? 'bg-gradient-to-r from-[#C6FF00]/15 to-[#C6FF00]/5 text-white font-semibold border border-[#C6FF00]/30 shadow-[0_0_25px_rgba(198,255,0,0.1)]'
-                  : 'text-[#94A3B8] hover:text-white hover:bg-white/[0.04] border border-transparent font-medium'
-              }`}
-              title={sidebarCollapsed ? item.label : undefined}
-            >
-              {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-[#C6FF00] rounded-r-full shadow-[0_0_10px_#C6FF00]" />
-              )}
-              <Icon
-                size={19}
-                className={`flex-shrink-0 transition-colors ${
-                  isActive ? 'text-[#C6FF00]' : 'text-[#64748B] group-hover:text-white'
-                }`}
-              />
-              {!sidebarCollapsed && (
-                <div className="flex items-center justify-between flex-1 min-w-0">
-                  <span className="text-xs truncate tracking-wide">{item.label}</span>
-                  {item.badge && (
+      <nav aria-label="Módulos" className="flex-1 space-y-5 overflow-y-auto px-3 py-5">
+        {navByVertical[vertical].map((group) => (
+          <div key={group.label} className="space-y-1">
+            {!collapsed && (
+              <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">{group.label}</p>
+            )}
+            {group.items.map((item) => {
+              const active = pathname === item.href || pathname?.startsWith(item.href + '/');
+              const Icon = item.icon;
+              const badge = item.badgeKey ? badges[item.badgeKey] : undefined;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  aria-current={active ? 'page' : undefined}
+                  title={collapsed ? item.label : undefined}
+                  className={cn(
+                    'group relative flex items-center gap-3 rounded-xl border px-3 py-2.5 text-[13px] transition-colors',
+                    collapsed && 'justify-center px-0',
+                    active
+                      ? 'border-gravl-volt/25 bg-gradient-to-r from-gravl-volt/[0.14] to-gravl-volt/[0.03] font-semibold text-white'
+                      : 'border-transparent font-medium text-gravl-text-secondary hover:bg-white/[0.04] hover:text-white',
+                  )}
+                >
+                  {active && (
+                    <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-gravl-volt shadow-[0_0_10px_#C6FF00]" />
+                  )}
+                  <Icon
+                    size={18}
+                    aria-hidden
+                    className={cn('shrink-0', active ? 'text-gravl-volt' : 'text-gravl-text-muted group-hover:text-white')}
+                  />
+                  {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
+                  {!collapsed && badge && (
                     <span
-                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full tabular-nums ${
-                        item.badge === 'Live'
-                          ? 'bg-[#22C55E]/15 text-[#22C55E] border border-[#22C55E]/30 animate-pulse'
-                          : 'bg-white/[0.08] text-[#94A3B8]'
-                      }`}
+                      className={cn(
+                        'tabular-nums rounded-full px-1.5 py-0.5 text-[10px] font-bold',
+                        badge.tone === 'live' && 'bg-gravl-emerald/15 text-gravl-emerald',
+                        badge.tone === 'crimson' && 'bg-gravl-crimson/15 text-rose-300',
+                        badge.tone === 'amber' && 'bg-gravl-amber/15 text-gravl-amber',
+                      )}
                     >
-                      {item.badge}
+                      {badge.text}
                     </span>
                   )}
-                </div>
-              )}
-            </Link>
-          );
-        })}
+                  {collapsed && badge && (
+                    <span
+                      className={cn(
+                        'absolute right-2 top-2 h-1.5 w-1.5 rounded-full',
+                        badge.tone === 'live' ? 'bg-gravl-emerald' : badge.tone === 'crimson' ? 'bg-gravl-crimson' : 'bg-gravl-amber',
+                      )}
+                    />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
-      {/* Bottom Actions */}
-      <div className="p-3 border-t border-white/[0.07] space-y-2">
+      <div className="space-y-1.5 border-t border-white/[0.07] p-3">
         <button
           onClick={() => setMobilePreviewOpen(!mobilePreviewOpen)}
-          className={`flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl transition-all duration-200 ${
+          aria-pressed={mobilePreviewOpen}
+          title={collapsed ? 'Preview de la app del socio' : undefined}
+          className={cn(
+            'flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors',
+            collapsed && 'justify-center px-0',
             mobilePreviewOpen
-              ? 'bg-[#38BDF8]/15 text-[#38BDF8] border border-[#38BDF8]/30 shadow-[0_0_20px_rgba(56,189,248,0.2)]'
-              : 'text-[#94A3B8] hover:text-white hover:bg-white/[0.04] border border-white/[0.05]'
-          }`}
-          title={sidebarCollapsed ? 'Member App Live Preview' : undefined}
-        >
-          <Smartphone size={18} className={mobilePreviewOpen ? 'text-[#38BDF8]' : 'text-[#64748B]'} />
-          {!sidebarCollapsed && (
-            <div className="flex items-center justify-between flex-1 text-left">
-              <span className="text-xs font-semibold">Live App Preview</span>
-              <Sparkles size={12} className="text-[#38BDF8]" />
-            </div>
+              ? 'border-gravl-cyan/30 bg-gravl-cyan/12 text-gravl-cyan'
+              : 'border-white/[0.06] text-gravl-text-secondary hover:bg-white/[0.04] hover:text-white',
           )}
-        </button>
-
-        <button
-          onClick={toggleSidebar}
-          className="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-[#64748B] hover:text-white hover:bg-white/[0.04] transition-all duration-200 text-xs font-medium"
         >
-          {sidebarCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-          {!sidebarCollapsed && <span>Colapsar Menú</span>}
+          <Smartphone size={17} aria-hidden />
+          {!collapsed && <span className="flex-1 text-left">Preview app del socio</span>}
         </button>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export default function Sidebar() {
+  const { sidebarCollapsed, toggleSidebar, mobileNavOpen, setMobileNavOpen } = useApp();
+
+  return (
+    <>
+      {/* Desktop */}
+      <aside
+        className={cn(
+          'fixed left-0 top-0 z-40 hidden h-screen select-none flex-col border-r border-white/[0.08] bg-gradient-to-b from-[#0E1219]/95 to-[#090C11]/98 backdrop-blur-xl transition-[width] duration-300 lg:flex',
+          sidebarCollapsed ? 'w-[76px]' : 'w-[260px]',
+        )}
+      >
+        <SidebarContent collapsed={sidebarCollapsed} />
+        <div className="px-3 pb-3">
+          <button
+            onClick={toggleSidebar}
+            aria-label={sidebarCollapsed ? 'Expandir menú' : 'Colapsar menú'}
+            className={cn(
+              'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-gravl-text-muted transition-colors hover:bg-white/[0.04] hover:text-white',
+              sidebarCollapsed && 'justify-center px-0',
+            )}
+          >
+            {sidebarCollapsed ? <ChevronRight size={17} /> : <ChevronLeft size={17} />}
+            {!sidebarCollapsed && <span>Colapsar menú</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobile drawer */}
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-[80] lg:hidden">
+          <div className="absolute inset-0 animate-fade-in bg-black/60" onClick={() => setMobileNavOpen(false)} aria-hidden />
+          <aside className="absolute left-0 top-0 flex h-full w-[280px] max-w-[85vw] animate-slide-in-left flex-col border-r border-white/[0.08] bg-[#0B0E14]">
+            <button
+              onClick={() => setMobileNavOpen(false)}
+              aria-label="Cerrar menú"
+              className="absolute right-3 top-4 z-10 rounded-lg p-1.5 text-gravl-text-muted hover:bg-white/[0.06] hover:text-white"
+            >
+              <X size={16} />
+            </button>
+            <SidebarContent collapsed={false} onNavigate={() => setMobileNavOpen(false)} />
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

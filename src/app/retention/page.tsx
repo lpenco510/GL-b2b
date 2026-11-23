@@ -1,284 +1,462 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import { locationName, members, nudgeTemplates } from '@/data/mockGravlB2B';
+import { inSegment, membersInScope, segmentCount, type MemberSegment } from '@/data/selectors';
+import { daysSince, fmtInt, fmtPct, fmtRelative } from '@/lib/format';
+import { cn } from '@/lib/cn';
+import { Avatar, Badge, Button, Card, CardHeader, EmptyState, PageHeader, ProgressBar, Toggle } from '@/components/ui/primitives';
+import { Modal } from '@/components/ui/Overlay';
+import MemberDrawer from '@/components/retention/MemberDrawer';
+import NudgeComposer from '@/components/retention/NudgeComposer';
+import { StatusBadge, StreakDots, riskColor } from '@/components/retention/memberUi';
+import type { B2BMemberTelemetry } from '@/types/gravl-b2b';
 import {
-  members, memberStats, nudgeRules,
-} from '@/data/mockGravlB2B';
-import {
-  Flame, TrendingUp, AlertTriangle, UserPlus, Users, Bell, Send, Search,
-  ChevronDown, ToggleLeft, ToggleRight, Zap, Clock,
+  AlertTriangle, ArrowDownUp, Bell, Check, ChevronLeft, ChevronRight, Clock, Download, Flame, Search, Send,
+  UserPlus, Users, Zap, type LucideIcon,
 } from 'lucide-react';
-import type { B2BMemberTelemetry, MemberStatus } from '@/types/gravl-b2b';
 
-type TabFilter = 'ALL' | 'ON_FIRE' | 'ACTIVE' | 'NEEDS_NUDGE' | 'AT_RISK' | 'NEW_JOINERS';
+const PAGE_SIZE = 25;
 
-const tabs: { key: TabFilter; label: string; icon: React.ElementType; count: number; color: string }[] = [
-  { key: 'ALL', label: 'All Members', icon: Users, count: memberStats.total, color: '#94A3B8' },
-  { key: 'ON_FIRE', label: 'On Fire', icon: Flame, count: memberStats.onFire, color: '#C6FF00' },
-  { key: 'NEEDS_NUDGE', label: 'Needs a Nudge', icon: Bell, count: memberStats.needsNudge, color: '#F59E0B' },
-  { key: 'AT_RISK', label: 'At Churn Risk', icon: AlertTriangle, count: memberStats.atRisk, color: '#EF4444' },
-  { key: 'NEW_JOINERS', label: 'New Joiners <5', icon: UserPlus, count: memberStats.newJoinersUnder5, color: '#38BDF8' },
+const segments: { key: MemberSegment; label: string; icon: LucideIcon; color: string; hint: string }[] = [
+  { key: 'ALL', label: 'Todos', icon: Users, color: '#94A3B8', hint: 'Base total' },
+  { key: 'ON_FIRE', label: 'On Fire', icon: Flame, color: '#C6FF00', hint: '3+ sesiones y racha ≥4 sem.' },
+  { key: 'ACTIVE', label: 'Activos', icon: Zap, color: '#22C55E', hint: 'Entrenaron en los últimos días' },
+  { key: 'NEEDS_NUDGE', label: 'Necesitan nudge', icon: Bell, color: '#F59E0B', hint: '5–13 días sin entrenar' },
+  { key: 'AT_RISK', label: 'En riesgo', icon: AlertTriangle, color: '#EF4444', hint: '14+ días sin entrenar' },
+  { key: 'NEW_JOINERS', label: 'Altas < 5 sesiones', icon: UserPlus, color: '#38BDF8', hint: 'Primer mes bajo el hito' },
 ];
 
-function statusBadge(status: MemberStatus) {
-  const map = {
-    ON_FIRE: { bg: 'bg-gravl-volt/10', text: 'text-gravl-volt', label: 'On Fire 🔥' },
-    ACTIVE: { bg: 'bg-gravl-emerald/10', text: 'text-gravl-emerald', label: 'Active' },
-    NEEDS_NUDGE: { bg: 'bg-gravl-amber/10', text: 'text-gravl-amber', label: 'Needs Nudge' },
-    AT_RISK: { bg: 'bg-gravl-crimson/10', text: 'text-gravl-crimson', label: 'At Risk' },
-  };
-  const s = map[status];
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.bg} ${s.text}`}>
-      {s.label}
-    </span>
-  );
+type SortKey = 'risk' | 'lastWorkout' | 'strength' | 'name';
+const sortOptions: { value: SortKey; label: string }[] = [
+  { value: 'risk', label: 'Riesgo de baja' },
+  { value: 'lastWorkout', label: 'Última sesión' },
+  { value: 'strength', label: 'Strength Score' },
+  { value: 'name', label: 'Nombre' },
+];
+
+const isNudgeable = (m: B2BMemberTelemetry) => m.status === 'NEEDS_NUDGE' || m.status === 'AT_RISK' || m.churnRisk >= 35;
+
+/** Lee intents de la URL (?segment=, ?member=) dentro de un Suspense para no bloquear el prerender. */
+function UrlIntents({ onSegment, onMember }: { onSegment: (s: MemberSegment) => void; onMember: (m: B2BMemberTelemetry) => void }) {
+  const params = useSearchParams();
+  const segment = params.get('segment');
+  const memberId = params.get('member');
+  useEffect(() => {
+    if (segment && segments.some((s) => s.key === segment)) onSegment(segment as MemberSegment);
+  }, [segment, onSegment]);
+  useEffect(() => {
+    const m = memberId ? members.find((x) => x.userId === memberId) : undefined;
+    if (m) onMember(m);
+  }, [memberId, onMember]);
+  return null;
 }
 
-function readinessColor(score?: number) {
-  if (!score) return 'text-gravl-text-muted';
-  if (score >= 80) return 'text-gravl-emerald';
-  if (score >= 50) return 'text-gravl-amber';
-  return 'text-gravl-crimson';
-}
-
-function streakRings(weeks: number) {
-  const filled = Math.min(weeks, 8);
-  return (
-    <div className="flex gap-0.5">
-      {Array.from({ length: 8 }, (_, i) => (
-        <div
-          key={i}
-          className={`w-2 h-2 rounded-full ${
-            i < filled ? 'bg-gravl-volt' : 'bg-white/[0.08]'
-          }`}
-        />
-      ))}
-    </div>
+function exportCsv(rows: B2BMemberTelemetry[]) {
+  const header = ['ID', 'Nombre', 'Sede', 'Estado', 'Riesgo %', 'Última sesión', 'Sesiones 30d', 'Racha (sem)', 'Strength Score', 'Δ30d'];
+  const lines = rows.map((m) =>
+    [m.userId, m.fullName, locationName(m.locationId), m.status, m.churnRisk, m.lastWorkoutAt.slice(0, 10), m.workoutsLast30Days, m.currentStreakWeeks, m.strengthScore, m.strengthScoreDelta30d]
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .join(','),
   );
+  const url = URL.createObjectURL(new Blob([`﻿${[header.join(','), ...lines].join('\n')}`], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `gravl-socios-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 export default function RetentionPage() {
-  const { addToast } = useApp();
-  const [activeTab, setActiveTab] = useState<TabFilter>('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [nudgeModalMember, setNudgeModalMember] = useState<B2BMemberTelemetry | null>(null);
-  const [localNudgeRules, setLocalNudgeRules] = useState(nudgeRules);
+  const { selectedLocationId, addToast, nudgedAt, markNudged, nudgeRules, toggleNudgeRule } = useApp();
+  const [segment, setSegment] = useState<MemberSegment>('ALL');
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<SortKey>('risk');
+  const [page, setPage] = useState(0);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [drawerMember, setDrawerMember] = useState<B2BMemberTelemetry | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkTemplate, setBulkTemplate] = useState(nudgeTemplates[0].id);
 
-  const filteredMembers = members
-    .filter((m) => {
-      if (activeTab === 'NEW_JOINERS') return m.workoutsFirst30Days < 5;
-      if (activeTab === 'ALL') return true;
-      return m.status === activeTab;
-    })
-    .filter((m) => !searchQuery || m.fullName.toLowerCase().includes(searchQuery.toLowerCase()))
-    .slice(0, 50); // paginate for performance
+  const scoped = useMemo(() => membersInScope(selectedLocationId), [selectedLocationId]);
+  const total = scoped.length;
 
-  const toggleNudgeRule = (id: string) => {
-    setLocalNudgeRules((prev) =>
-      prev.map((r) => r.id === id ? { ...r, enabled: !r.enabled } : r)
-    );
-    const rule = localNudgeRules.find((r) => r.id === id);
-    if (rule) {
-      addToast(
-        `${rule.name} ${rule.enabled ? 'disabled' : 'enabled'} — Changes synced to GRAVL Push Engine`,
-        rule.enabled ? 'warning' : 'success'
-      );
-    }
-  };
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const list = scoped.filter((m) => inSegment(m, segment) && (!q || m.fullName.toLowerCase().includes(q)));
+    const sorters: Record<SortKey, (a: B2BMemberTelemetry, b: B2BMemberTelemetry) => number> = {
+      risk: (a, b) => b.churnRisk - a.churnRisk,
+      lastWorkout: (a, b) => a.lastWorkoutAt.localeCompare(b.lastWorkoutAt),
+      strength: (a, b) => b.strengthScore - a.strengthScore,
+      name: (a, b) => a.fullName.localeCompare(b.fullName, 'es'),
+    };
+    return [...list].sort(sorters[sort]);
+  }, [scoped, segment, query, sort]);
 
-  const sendNudge = (member: B2BMemberTelemetry) => {
-    setNudgeModalMember(null);
-    addToast(
-      `Nudge sent to ${member.fullName} — Push notification dispatched via GRAVL Mobile App`,
-      'success'
-    );
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const rows = filtered.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+  const selectedMembers = filtered.filter((m) => selected.has(m.userId));
+  const pageNudgeable = rows.filter((m) => isNudgeable(m) && !nudgedAt[m.userId]);
+  const allPageSelected = pageNudgeable.length > 0 && pageNudgeable.every((m) => selected.has(m.userId));
+  const nudgeableInSegment = filtered.filter((m) => isNudgeable(m) && !nudgedAt[m.userId]);
+
+  const changeSegment = React.useCallback((s: MemberSegment) => {
+    setSegment(s);
+    setPage(0);
+    setSelected(new Set());
+  }, []);
+  const openMember = React.useCallback((m: B2BMemberTelemetry) => setDrawerMember(m), []);
+
+  const toggleRow = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const sendBulk = () => {
+    const ids = selectedMembers.map((m) => m.userId);
+    markNudged(ids);
+    setSelected(new Set());
+    setBulkOpen(false);
+    addToast(`${fmtInt(ids.length)} nudges programados en el horario habitual de cada socio.`, 'success');
   };
 
   return (
-    <div className="space-y-6 max-w-[1400px]">
-      {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold text-gravl-text">Retention & Smart Nudge Engine</h2>
-        <p className="text-sm text-gravl-text-muted mt-1">
-          See who is training right now, who was active this week and who could use a nudge.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <Suspense fallback={null}>
+        <UrlIntents onSegment={changeSegment} onMember={openMember} />
+      </Suspense>
 
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.key;
+      <PageHeader
+        title="Retención & Nudges"
+        description="Quién está entrenando, quién se está enfriando y a quién conviene escribirle hoy. Ordenado por riesgo de baja."
+        actions={
+          <Button icon={Download} onClick={() => exportCsv(filtered)} disabled={!filtered.length}>
+            Exportar {fmtInt(filtered.length)}
+          </Button>
+        }
+      />
+
+      {/* Segmentos */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6" role="tablist" aria-label="Segmentos de socios">
+        {segments.map((s) => {
+          const count = segmentCount(selectedLocationId, s.key);
+          const active = segment === s.key;
+          const Icon = s.icon;
           return (
             <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                isActive
-                  ? 'text-gravl-canvas'
-                  : 'liquid-glass text-gravl-text-secondary hover:text-gravl-text'
-              }`}
-              style={isActive ? { background: tab.color } : undefined}
+              key={s.key}
+              role="tab"
+              aria-selected={active}
+              onClick={() => changeSegment(s.key)}
+              className={cn(
+                'gravl-card gravl-card-interactive p-4 text-left',
+                active && 'ring-1',
+              )}
+              style={active ? { borderColor: `${s.color}66`, boxShadow: `0 0 0 1px ${s.color}40, 0 12px 32px -12px ${s.color}40` } : undefined}
             >
-              <Icon size={14} />
-              {tab.label}
-              <span className="tabular-nums text-xs opacity-80">({tab.count})</span>
+              <span className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide" style={{ color: s.color }}>
+                  <Icon size={13} aria-hidden /> {s.label}
+                </span>
+                {s.key !== 'ALL' && (
+                  <span className="tabular-nums text-[10px] text-gravl-text-muted">{fmtPct((count / Math.max(1, total)) * 100)}</span>
+                )}
+              </span>
+              <span className="tabular-nums mt-2 block font-mono text-2xl font-black text-white">{fmtInt(count)}</span>
+              <span className="mt-0.5 block truncate text-[11px] text-gravl-text-muted">{s.hint}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gravl-text-muted" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search members..."
-          className="w-full bg-gravl-surface border border-white/[0.09] rounded-xl pl-10 pr-4 py-2.5 text-sm text-gravl-text placeholder:text-gravl-text-muted focus:outline-none focus:border-gravl-volt/30 transition-colors"
-        />
-      </div>
-
-      {/* Member Table */}
-      <div className="gravl-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/[0.06]">
-                {['Member', 'Location', 'Streak', 'Last Workout', 'Workouts/Mo', 'Strength Score', 'Readiness', 'Status', 'Action'].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-[10px] font-semibold text-gravl-text-muted uppercase tracking-wider">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredMembers.map((m) => (
-                <tr key={m.userId} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={m.avatarUrl}
-                        alt={m.fullName}
-                        className="w-8 h-8 rounded-full border border-white/[0.09]"
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-gravl-text">{m.fullName}</p>
-                        {m.macrosActive && <span className="text-[9px] text-gravl-cyan">Macros Active</span>}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gravl-text-secondary">
-                    {m.locationId === 'loc_palermo' ? 'Palermo' : m.locationId === 'loc_belgrano' ? 'Belgrano' : 'Nordelta'}
-                  </td>
-                  <td className="px-4 py-3">{streakRings(m.currentStreakWeeks)}</td>
-                  <td className="px-4 py-3 text-xs text-gravl-text-secondary tabular-nums">
-                    {new Date(m.lastWorkoutAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="tabular-nums text-sm font-semibold text-gravl-text">{m.workoutsThisWeek}</span>
-                    <span className="text-xs text-gravl-text-muted">/{m.weeklyTarget}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="tabular-nums text-sm font-bold text-gravl-cyan">{m.strengthScore}</span>
-                    <span className={`text-xs ml-1 ${m.strengthScoreDelta30d >= 0 ? 'text-gravl-emerald' : 'text-gravl-crimson'}`}>
-                      {m.strengthScoreDelta30d >= 0 ? '+' : ''}{m.strengthScoreDelta30d}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`tabular-nums text-sm font-semibold ${readinessColor(m.readinessScore)}`}>
-                      {m.readinessScore ?? '—'}%
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">{statusBadge(m.status)}</td>
-                  <td className="px-4 py-3">
-                    {(m.status === 'NEEDS_NUDGE' || m.status === 'AT_RISK') && (
-                      <button
-                        onClick={() => setNudgeModalMember(m)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gravl-volt/10 text-gravl-volt text-xs font-semibold hover:bg-gravl-volt/20 transition-colors"
-                      >
-                        <Send size={12} />
-                        Send Nudge
-                      </button>
-                    )}
-                  </td>
-                </tr>
+      {/* Tabla */}
+      <Card>
+        <div className="flex flex-col gap-3 border-b border-white/[0.06] p-4 lg:flex-row lg:items-center">
+          <label className="relative flex-1">
+            <span className="sr-only">Buscar socios</span>
+            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gravl-text-muted" aria-hidden />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(0);
+              }}
+              placeholder="Buscar por nombre…"
+              className="gravl-input pl-9"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-xs text-gravl-text-secondary">
+            <ArrowDownUp size={14} aria-hidden />
+            <span className="sr-only lg:not-sr-only">Ordenar por</span>
+            <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className="gravl-input w-auto py-2 text-xs font-semibold">
+              {sortOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
               ))}
-            </tbody>
-          </table>
+            </select>
+          </label>
+          {nudgeableInSegment.length > 0 && selected.size === 0 && (
+            <Button
+              size="sm"
+              variant="soft"
+              icon={Send}
+              onClick={() => {
+                setSelected(new Set(nudgeableInSegment.map((m) => m.userId)));
+                setBulkOpen(true);
+              }}
+            >
+              Nudge a los {fmtInt(nudgeableInSegment.length)} pendientes
+            </Button>
+          )}
         </div>
-      </div>
 
-      {/* Automated Nudge Rules */}
-      <div>
-        <h3 className="text-lg font-bold text-gravl-text mb-1">Automated Nudge Rules</h3>
-        <p className="text-sm text-gravl-text-muted mb-4">No-code triggers that automatically dispatch push notifications via GRAVL</p>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {localNudgeRules.map((rule) => (
-            <div key={rule.id} className={`gravl-card p-5 ${rule.enabled ? 'border-gravl-volt/20' : ''}`}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Zap size={16} className={rule.enabled ? 'text-gravl-volt' : 'text-gravl-text-muted'} />
-                  <h4 className="text-sm font-semibold text-gravl-text">{rule.name}</h4>
-                </div>
-                <button onClick={() => toggleNudgeRule(rule.id)}>
-                  {rule.enabled ? (
-                    <ToggleRight size={24} className="text-gravl-volt" />
-                  ) : (
-                    <ToggleLeft size={24} className="text-gravl-text-muted" />
-                  )}
-                </button>
+        {selected.size > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gravl-volt/20 bg-gravl-volt/[0.06] px-4 py-2.5">
+            <p className="text-xs font-semibold text-white">
+              <span className="tabular-nums">{fmtInt(selected.size)}</span> socios seleccionados
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+                Limpiar
+              </Button>
+              <Button size="sm" variant="primary" icon={Send} onClick={() => setBulkOpen(true)}>
+                Enviar nudge
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {rows.length === 0 ? (
+          <EmptyState
+            icon={Search}
+            title="No hay socios en este filtro"
+            description={query ? `Nada coincide con “${query}”. Probá con otro nombre o segmento.` : 'Cambiá de segmento o de sede para ver más socios.'}
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[980px]">
+              <caption className="sr-only">Socios del segmento seleccionado</caption>
+              <thead>
+                <tr className="border-b border-white/[0.06] text-left text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">
+                  <th scope="col" className="w-10 px-4 py-3">
+                    <input
+                      type="checkbox"
+                      aria-label="Seleccionar socios contactables de esta página"
+                      checked={allPageSelected}
+                      disabled={!pageNudgeable.length}
+                      onChange={() =>
+                        setSelected((prev) => {
+                          const next = new Set(prev);
+                          pageNudgeable.forEach((m) => (allPageSelected ? next.delete(m.userId) : next.add(m.userId)));
+                          return next;
+                        })
+                      }
+                      className="h-4 w-4 accent-[#C6FF00]"
+                    />
+                  </th>
+                  <th scope="col" className="px-3 py-3">Socio</th>
+                  {selectedLocationId === 'all' && <th scope="col" className="px-3 py-3">Sede</th>}
+                  <th scope="col" className="px-3 py-3">Racha</th>
+                  <th scope="col" className="px-3 py-3">Última sesión</th>
+                  <th scope="col" className="px-3 py-3">Sesiones 30 d</th>
+                  <th scope="col" className="px-3 py-3">Strength Score</th>
+                  <th scope="col" className="px-3 py-3">Riesgo</th>
+                  <th scope="col" className="px-3 py-3">Estado</th>
+                  <th scope="col" className="px-4 py-3 text-right"><span className="sr-only">Acción</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((m) => {
+                  const days = daysSince(m.lastWorkoutAt);
+                  const nudged = nudgedAt[m.userId];
+                  const canNudge = isNudgeable(m) && !nudged;
+                  return (
+                    <tr
+                      key={m.userId}
+                      onClick={() => setDrawerMember(m)}
+                      className={cn(
+                        'cursor-pointer border-b border-white/[0.03] transition-colors hover:bg-white/[0.025]',
+                        selected.has(m.userId) && 'bg-gravl-volt/[0.04]',
+                      )}
+                    >
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          aria-label={`Seleccionar a ${m.fullName}`}
+                          checked={selected.has(m.userId)}
+                          disabled={!canNudge}
+                          onChange={() => toggleRow(m.userId)}
+                          className="h-4 w-4 accent-[#C6FF00] disabled:opacity-30"
+                        />
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar name={m.fullName} size={32} />
+                          <div className="min-w-0">
+                            <button
+                              className="truncate text-left text-sm font-semibold text-white hover:underline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDrawerMember(m);
+                              }}
+                            >
+                              {m.fullName}
+                            </button>
+                            <p className="text-[10px] text-gravl-text-muted">
+                              {nudged ? (
+                                <span className="text-gravl-emerald">Nudge enviado {fmtRelative(nudged)}</span>
+                              ) : m.macrosActive ? (
+                                <span className="text-gravl-cyan">Gravl Macros</span>
+                              ) : (
+                                m.userId
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      {selectedLocationId === 'all' && <td className="px-3 py-3 text-xs text-gravl-text-secondary">{locationName(m.locationId)}</td>}
+                      <td className="px-3 py-3"><StreakDots weeks={m.currentStreakWeeks} /></td>
+                      <td className={cn('tabular-nums px-3 py-3 text-xs', days >= 14 ? 'font-semibold text-rose-400' : days >= 5 ? 'text-gravl-amber' : 'text-gravl-text-secondary')}>
+                        {days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days} d`}
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="tabular-nums text-sm font-semibold text-white">{m.workoutsLast30Days}</span>
+                        <span className="ml-1.5 text-[10px] text-gravl-text-muted">{m.workoutsThisWeek}/{m.weeklyTarget} sem.</span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="tabular-nums text-sm font-bold text-gravl-cyan">{m.strengthScore}</span>
+                        <span className={cn('tabular-nums ml-1.5 text-xs', m.strengthScoreDelta30d >= 0 ? 'text-gravl-emerald' : 'text-rose-400')}>
+                          {m.strengthScoreDelta30d >= 0 ? '+' : ''}
+                          {m.strengthScoreDelta30d}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex w-24 items-center gap-2">
+                          <ProgressBar value={m.churnRisk} color={riskColor(m.churnRisk)} label={`Riesgo ${m.churnRisk}%`} />
+                          <span className="tabular-nums w-8 text-right text-[11px] font-bold" style={{ color: riskColor(m.churnRisk) }}>
+                            {m.churnRisk}%
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3"><StatusBadge status={m.status} /></td>
+                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        {nudged ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-gravl-emerald">
+                            <Check size={13} aria-hidden /> Enviado
+                          </span>
+                        ) : canNudge ? (
+                          <Button size="sm" variant="soft" icon={Send} onClick={() => setDrawerMember(m)}>
+                            Nudge
+                          </Button>
+                        ) : null}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div className="flex flex-col items-center justify-between gap-3 px-4 py-3 text-xs text-gravl-text-muted sm:flex-row">
+          <p className="tabular-nums">
+            {filtered.length ? `${fmtInt(currentPage * PAGE_SIZE + 1)}–${fmtInt(Math.min(filtered.length, (currentPage + 1) * PAGE_SIZE))} de ${fmtInt(filtered.length)} socios` : '0 socios'}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button size="icon" variant="ghost" aria-label="Página anterior" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>
+              <ChevronLeft size={16} />
+            </Button>
+            <span className="tabular-nums px-2">
+              {currentPage + 1} / {pageCount}
+            </span>
+            <Button size="icon" variant="ghost" aria-label="Página siguiente" disabled={currentPage >= pageCount - 1} onClick={() => setPage(currentPage + 1)}>
+              <ChevronRight size={16} />
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Reglas automáticas */}
+      <section>
+        <CardHeader
+          icon={Zap}
+          title="Reglas automáticas de nudges"
+          subtitle="Triggers sin código que despachan pushes con tu marca desde la app de GRAVL. Medimos cuántos socios vuelven en 72 h."
+        />
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {nudgeRules.map((rule) => (
+            <Card key={rule.id} className={cn('flex flex-col p-5', rule.enabled && 'border-gravl-volt/20')}>
+              <div className="flex items-start justify-between gap-3">
+                <h4 className="flex items-center gap-2 text-sm font-bold text-white">
+                  <Zap size={15} className={rule.enabled ? 'text-gravl-volt' : 'text-gravl-text-muted'} aria-hidden />
+                  {rule.name}
+                </h4>
+                <Toggle
+                  checked={rule.enabled}
+                  label={`${rule.enabled ? 'Desactivar' : 'Activar'} ${rule.name}`}
+                  onChange={() => {
+                    toggleNudgeRule(rule.id);
+                    addToast(`${rule.name} ${rule.enabled ? 'pausada' : 'activada'}. Cambios sincronizados con el Push Engine.`, rule.enabled ? 'warning' : 'success');
+                  }}
+                />
               </div>
-              <p className="text-xs text-gravl-text-secondary leading-relaxed mb-3">{rule.description}</p>
-              <div className="flex items-center gap-4 text-xs text-gravl-text-muted">
+              <p className="mt-2 flex-1 text-xs leading-relaxed text-gravl-text-secondary">{rule.description}</p>
+              {rule.recoveryRate > 0 && (
+                <div className="mt-4">
+                  <div className="mb-1.5 flex items-center justify-between text-[11px]">
+                    <span className="text-gravl-text-muted">Socios que volvieron en 72 h</span>
+                    <span className="tabular-nums font-bold text-gravl-emerald">{rule.recoveryRate}%</span>
+                  </div>
+                  <ProgressBar value={rule.recoveryRate} color="var(--color-gravl-emerald)" label="Tasa de recuperación" />
+                </div>
+              )}
+              <div className="mt-4 flex items-center gap-4 border-t border-white/[0.05] pt-3 text-[11px] text-gravl-text-muted">
                 <span className="flex items-center gap-1">
-                  <Bell size={10} />
-                  <span className="tabular-nums">{rule.triggerCount}</span> triggered
+                  <Bell size={11} aria-hidden /> <span className="tabular-nums">{rule.triggerCount}</span> disparos
                 </span>
                 {rule.lastTriggered && (
                   <span className="flex items-center gap-1">
-                    <Clock size={10} />
-                    Last: {new Date(rule.lastTriggered).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                    <Clock size={11} aria-hidden /> Último {fmtRelative(rule.lastTriggered)}
                   </span>
                 )}
+                {!rule.enabled && <Badge tone="neutral">Pausada</Badge>}
               </div>
-            </div>
+            </Card>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Nudge Modal */}
-      {nudgeModalMember && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60" onClick={() => setNudgeModalMember(null)}>
-          <div className="liquid-glass-static p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-gravl-text mb-2">Send Nudge</h3>
-            <p className="text-sm text-gravl-text-secondary mb-4">
-              Dispatch a personalized push notification to <span className="text-gravl-text font-semibold">{nudgeModalMember.fullName}</span> via the GRAVL Mobile App.
-            </p>
-            <div className="gravl-card p-4 mb-4">
-              <p className="text-xs text-gravl-text-secondary italic">
-                &quot;Your rack at 9 Fitness misses you — we dialed back today&apos;s volume by 10% for an easy return session. Let&apos;s get back at it! 💪&quot;
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setNudgeModalMember(null)}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.09] text-sm text-gravl-text-secondary hover:text-gravl-text hover:bg-white/[0.04] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => sendNudge(nudgeModalMember)}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-gravl-volt text-gravl-canvas text-sm font-semibold hover:bg-gravl-volt-hover transition-colors flex items-center justify-center gap-2"
-              >
-                <Send size={14} />
-                Send Nudge
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <MemberDrawer member={drawerMember} onClose={() => setDrawerMember(null)} />
+
+      <Modal
+        open={bulkOpen}
+        onClose={() => setBulkOpen(false)}
+        title={`Enviar nudge a ${fmtInt(selectedMembers.length)} socios`}
+        description="Cada socio recibe el mensaje personalizado con su nombre, en su horario habitual de entrenamiento."
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setBulkOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="primary" icon={Send} onClick={sendBulk} disabled={!selectedMembers.length}>
+              Programar {fmtInt(selectedMembers.length)} nudges
+            </Button>
+          </>
+        }
+      >
+        <NudgeComposer templateId={bulkTemplate} onTemplate={setBulkTemplate} member={selectedMembers[0]} />
+        <p className="mt-4 text-[11px] text-gravl-text-muted">
+          Vista previa con {selectedMembers[0]?.fullName ?? 'el primer socio'}. Frecuencia máxima: 1 nudge cada 7 días por socio.
+        </p>
+      </Modal>
     </div>
   );
 }

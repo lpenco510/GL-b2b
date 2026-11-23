@@ -1,43 +1,57 @@
 'use client';
 
 import React from 'react';
-import { useApp } from '@/context/AppContext';
-import { X, CheckCircle, Info, AlertTriangle } from 'lucide-react';
+import { useApp, type ToastType } from '@/context/AppContext';
+import { AlertTriangle, CheckCircle2, Info, X } from 'lucide-react';
+
+const styles: Record<ToastType, { icon: typeof Info; color: string }> = {
+  success: { icon: CheckCircle2, color: '#22C55E' },
+  info: { icon: Info, color: '#38BDF8' },
+  warning: { icon: AlertTriangle, color: '#F59E0B' },
+};
 
 export default function ToastContainer() {
   const { toasts, removeToast } = useApp();
 
-  if (toasts.length === 0) return null;
-
-  const iconMap = {
-    success: <CheckCircle size={18} className="text-gravl-emerald flex-shrink-0" />,
-    info: <Info size={18} className="text-gravl-cyan flex-shrink-0" />,
-    warning: <AlertTriangle size={18} className="text-gravl-amber flex-shrink-0" />,
-  };
-
-  const borderMap = {
-    success: 'border-gravl-emerald/30',
-    info: 'border-gravl-cyan/30',
-    warning: 'border-gravl-amber/30',
-  };
-
   return (
-    <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 max-w-sm">
-      {toasts.map((toast) => (
-        <div
-          key={toast.id}
-          className={`toast-enter liquid-glass-static flex items-start gap-3 px-4 py-3 ${borderMap[toast.type]}`}
-        >
-          {iconMap[toast.type]}
-          <p className="text-sm text-gravl-text flex-1">{toast.message}</p>
-          <button
-            onClick={() => removeToast(toast.id)}
-            className="text-gravl-text-muted hover:text-gravl-text transition-colors flex-shrink-0"
+    <div
+      aria-live="polite"
+      aria-atomic="false"
+      className="pointer-events-none fixed bottom-4 left-4 right-4 z-[100] flex flex-col items-end gap-2 sm:left-auto sm:right-6 sm:bottom-6"
+    >
+      {toasts.map((toast) => {
+        const s = styles[toast.type];
+        const Icon = s.icon;
+        return (
+          <div
+            key={toast.id}
+            role="status"
+            className="gravl-glass pointer-events-auto flex w-full max-w-sm animate-slide-up items-start gap-3 px-4 py-3"
+            style={{ borderColor: `${s.color}40` }}
           >
-            <X size={14} />
-          </button>
-        </div>
-      ))}
+            <Icon size={18} className="mt-px shrink-0" style={{ color: s.color }} aria-hidden />
+            <p className="flex-1 text-[13px] leading-snug text-white">{toast.message}</p>
+            {toast.action && (
+              <button
+                onClick={() => {
+                  toast.action?.onClick();
+                  removeToast(toast.id);
+                }}
+                className="shrink-0 text-xs font-bold text-gravl-volt hover:underline"
+              >
+                {toast.action.label}
+              </button>
+            )}
+            <button
+              onClick={() => removeToast(toast.id)}
+              aria-label="Descartar"
+              className="shrink-0 text-gravl-text-muted transition-colors hover:text-white"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }

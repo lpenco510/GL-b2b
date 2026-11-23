@@ -1,184 +1,167 @@
 'use client';
 
-import React from 'react';
+import React, { useLayoutEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { X, Smartphone, Dumbbell, Trophy, Bell as BellIcon, Flame } from 'lucide-react';
-import { liveWorkoutFeed, organization, challenges } from '@/data/mockGravlB2B';
+import { liveWorkoutFeed, locationById, locations, nudgeTemplates, tenantsByVertical } from '@/data/mockGravlB2B';
+import { useVertical } from './useVertical';
+import { Bell, Dumbbell, Flame, Home, LineChart, Smartphone, Trophy, User, Users, X } from 'lucide-react';
 
+/**
+ * Preview en vivo de cómo ve el socio la app con la marca del partner.
+ * Lee el mismo estado que el panel: si creás un reto o cambiás de sede,
+ * el teléfono lo refleja al instante — es el "momento wow" de la demo.
+ */
 export default function MobilePreviewDrawer() {
-  const { mobilePreviewOpen, setMobilePreviewOpen } = useApp();
+  const { mobilePreviewOpen, setMobilePreviewOpen, challenges, selectedLocationId } = useApp();
+  const vertical = useVertical();
+  const tenant = tenantsByVertical[vertical];
+  const location = selectedLocationId === 'all' ? locations[0] : locationById(selectedLocationId) ?? locations[0];
+  const challenge = challenges.find((c) => c.status === 'ACTIVE') ?? challenges[0];
+  const push = nudgeTemplates[0].body.replace('{gym}', tenant.name).replace('{name}', 'Sofía');
+  const feed = liveWorkoutFeed.filter((e) => selectedLocationId === 'all' || e.locationId === selectedLocationId).slice(0, 3);
+
+  // Cerrar con Esc
+  useLayoutEffect(() => {
+    if (!mobilePreviewOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMobilePreviewOpen(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobilePreviewOpen, setMobilePreviewOpen]);
 
   if (!mobilePreviewOpen) return null;
 
   return (
-    <div className="fixed right-0 top-0 h-full z-50 w-[380px] flex flex-col border-l"
-      style={{
-        background: 'rgba(10, 12, 16, 0.95)',
-        backdropFilter: 'blur(20px)',
-        borderColor: 'rgba(255, 255, 255, 0.09)',
-      }}
+    <aside
+      aria-label="Preview de la app del socio"
+      className="fixed right-0 top-0 z-[70] flex h-full w-full max-w-[400px] animate-slide-in-right flex-col border-l border-white/[0.09] bg-[#0A0C10]/96 shadow-2xl backdrop-blur-xl"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.09]">
-        <div className="flex items-center gap-2">
-          <Smartphone size={16} className="text-gravl-cyan" />
-          <span className="text-sm font-semibold text-gravl-text">Member App Live Preview</span>
+      <div className="flex items-center justify-between border-b border-white/[0.08] px-5 py-4">
+        <div>
+          <p className="flex items-center gap-2 text-sm font-bold text-white">
+            <Smartphone size={16} className="text-gravl-cyan" aria-hidden />
+            App del socio · en vivo
+          </p>
+          <p className="mt-0.5 text-[11px] text-gravl-text-muted">Refleja la marca, la sede y los retos que configurás</p>
         </div>
         <button
           onClick={() => setMobilePreviewOpen(false)}
-          className="text-gravl-text-muted hover:text-gravl-text transition-colors"
+          aria-label="Cerrar preview"
+          className="rounded-lg p-1.5 text-gravl-text-muted hover:bg-white/[0.06] hover:text-white"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
       </div>
 
-      {/* Phone Frame */}
-      <div className="flex-1 p-4 overflow-y-auto">
-        <div
-          className="rounded-[2.5rem] border-[3px] border-white/[0.12] overflow-hidden"
-          style={{
-            background: '#000',
-            boxShadow: '0 0 40px rgba(0,0,0,0.5), inset 0 0 1px rgba(255,255,255,0.1)',
-          }}
-        >
-          {/* Dynamic Island */}
-          <div className="flex justify-center pt-3 pb-2">
-            <div className="w-[120px] h-[34px] bg-black rounded-full border border-white/[0.05]" />
+      <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="mx-auto max-w-[320px] overflow-hidden rounded-[2.6rem] border-[3px] border-white/[0.12] bg-black shadow-[0_0_60px_rgba(0,0,0,0.6)]">
+          <div className="flex justify-center pb-2 pt-3">
+            <div className="h-[30px] w-[110px] rounded-full border border-white/[0.05] bg-black" />
           </div>
 
-          {/* App Content */}
-          <div className="px-4 pb-6 space-y-4" style={{ background: '#0A0C10' }}>
-            {/* App Header */}
-            <div className="flex items-center justify-between pt-2">
+          <div className="space-y-3 bg-[#0A0C10] px-4 pb-4 pt-1">
+            <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-gravl-text">Hey, Sofía 👋</h3>
-                <p className="text-xs text-gravl-text-muted">Ready to crush it today</p>
+                <p className="text-[15px] font-bold text-white">Hola, Sofía 👋</p>
+                <p className="text-[11px] text-gravl-text-muted">Hoy toca: Lower A · 52 min</p>
               </div>
-              <div className="w-8 h-8 rounded-full bg-gravl-volt/20 flex items-center justify-center">
-                <span className="text-xs font-bold text-gravl-volt">SM</span>
-              </div>
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gravl-volt/20 text-[11px] font-bold text-gravl-volt">SM</span>
             </div>
 
-            {/* Gym Badge */}
-            <div className="gravl-card p-3">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-gravl-volt flex items-center justify-center">
-                  <span className="text-[8px] font-bold text-gravl-canvas">9F</span>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-gravl-text">{organization.name}</p>
-                  <p className="text-[10px] text-gravl-text-muted">Sede Palermo • GRAVL Pro Active</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Strength Score Ring */}
-            <div className="gravl-card p-4 text-center">
-              <div className="relative mx-auto w-24 h-24">
-                <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                  <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.06)" strokeWidth="8" fill="none" />
-                  <circle cx="50" cy="50" r="42" stroke="#38BDF8" strokeWidth="8" fill="none"
-                    strokeDasharray={`${0.78 * 264} 264`}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="tabular-nums text-xl font-bold text-gravl-cyan">245</span>
-                  <span className="text-[9px] text-gravl-text-muted">Strength Score</span>
-                </div>
-              </div>
-              <p className="text-xs text-gravl-emerald mt-2 font-medium">+14 pts this month ↑</p>
-            </div>
-
-            {/* Weekly Streak */}
-            <div className="gravl-card p-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1.5">
-                  <Flame size={14} className="text-gravl-amber" />
-                  <span className="text-xs font-semibold text-gravl-text">Week Streak</span>
-                </div>
-                <span className="text-xs tabular-nums text-gravl-volt font-bold">8 weeks 🔥</span>
-              </div>
-              <div className="flex gap-1">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
-                  <div key={day} className="flex-1 text-center">
-                    <div className={`w-full h-1.5 rounded-full mb-1 ${
-                      i < 3 ? 'bg-gravl-volt' : i === 3 ? 'bg-gravl-volt/40' : 'bg-white/[0.06]'
-                    }`} />
-                    <span className="text-[8px] text-gravl-text-muted">{day}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[10px] text-gravl-text-secondary mt-1.5">3 of 4 workouts completed</p>
-            </div>
-
-            {/* Active Challenge */}
-            {challenges.filter(c => c.status === 'ACTIVE').slice(0, 1).map((ch) => (
-              <div key={ch.id} className="gravl-card p-3 border-gravl-volt/20">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Trophy size={12} className="text-gravl-volt" />
-                  <span className="text-[10px] font-semibold text-gravl-volt uppercase tracking-wider">Active Challenge</span>
-                </div>
-                <p className="text-xs font-semibold text-gravl-text">{ch.title}</p>
-                <div className="mt-2 w-full bg-white/[0.06] rounded-full h-1.5">
-                  <div
-                    className="bg-gravl-volt h-1.5 rounded-full transition-all"
-                    style={{ width: `${((ch.currentValue || 0) / ch.targetValue) * 100}%` }}
-                  />
-                </div>
-                <p className="text-[10px] text-gravl-text-muted mt-1 tabular-nums">
-                  {ch.currentValue} / {ch.targetValue} • {ch.participantsCount} participants
+            <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] p-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gravl-volt text-[9px] font-black text-gravl-canvas">
+                {tenant.shortName}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-semibold text-white">{tenant.name}</p>
+                <p className="truncate text-[10px] text-gravl-text-muted">
+                  {vertical === 'GYM_CHAIN' ? `${location.name} · ` : ''}GRAVL Pro activo
                 </p>
               </div>
-            ))}
-
-            {/* Live Feed Preview */}
-            <div className="gravl-card p-3">
-              <div className="flex items-center gap-1.5 mb-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-gravl-ping absolute inline-flex h-full w-full rounded-full bg-gravl-emerald opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-gravl-emerald" />
-                </span>
-                <span className="text-[10px] font-semibold text-gravl-text-secondary uppercase tracking-wider">Live Feed</span>
-              </div>
-              <div className="space-y-2">
-                {liveWorkoutFeed.slice(0, 3).map((evt) => (
-                  <div key={evt.id} className="flex items-center gap-2 text-[10px]">
-                    <Dumbbell size={10} className="text-gravl-text-muted flex-shrink-0" />
-                    <span className="text-gravl-text-secondary">
-                      <span className="text-gravl-text font-medium">{evt.memberName}</span>
-                      {' '}{evt.exercise}{' '}
-                      <span className="tabular-nums font-semibold text-gravl-text">{evt.weight}{evt.unit}</span>
-                      {evt.isPR && <span className="text-gravl-volt ml-1">🏆 PR!</span>}
-                    </span>
-                  </div>
-                ))}
-              </div>
             </div>
 
-            {/* Nudge Notification Preview */}
-            <div className="gravl-card p-3 border-gravl-cyan/20">
-              <div className="flex items-center gap-1.5 mb-1">
-                <BellIcon size={12} className="text-gravl-cyan" />
-                <span className="text-[10px] font-semibold text-gravl-cyan">Push Notification</span>
-              </div>
-              <p className="text-[10px] text-gravl-text">
-                &quot;Your rack at {organization.name} misses you — we dialed back today&apos;s volume by 10% for an easy return session&quot;
-              </p>
-            </div>
-
-            {/* Bottom nav mock */}
-            <div className="flex items-center justify-around pt-3 pb-1 border-t border-white/[0.06]">
-              {['Train', 'Progress', 'Social', 'Profile'].map((tab) => (
-                <div key={tab} className="text-center">
-                  <div className={`w-5 h-5 rounded mx-auto mb-0.5 ${tab === 'Train' ? 'bg-gravl-volt/20' : 'bg-white/[0.04]'}`} />
-                  <span className={`text-[8px] ${tab === 'Train' ? 'text-gravl-volt font-semibold' : 'text-gravl-text-muted'}`}>{tab}</span>
+            <div className="flex items-center gap-4 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3">
+              <div className="relative h-20 w-20 shrink-0">
+                <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden>
+                  <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.06)" strokeWidth="9" fill="none" />
+                  <circle cx="50" cy="50" r="42" stroke="#38BDF8" strokeWidth="9" fill="none" strokeDasharray={`${0.78 * 264} 264`} strokeLinecap="round" />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="tabular-nums text-lg font-bold text-gravl-cyan">245</span>
+                  <span className="text-[8px] text-gravl-text-muted">Strength</span>
                 </div>
-              ))}
+              </div>
+              <div className="min-w-0 space-y-1.5">
+                <p className="text-[11px] font-semibold text-gravl-emerald">+14 pts este mes ↑</p>
+                <p className="flex items-center gap-1 text-[11px] text-white">
+                  <Flame size={12} className="text-gravl-amber" aria-hidden /> Racha de 8 semanas
+                </p>
+                <div className="flex gap-1" aria-label="3 de 4 entrenamientos esta semana">
+                  {[0, 1, 2, 3].map((i) => (
+                    <span key={i} className={`h-1.5 w-6 rounded-full ${i < 3 ? 'bg-gravl-volt' : 'bg-white/[0.08]'}`} />
+                  ))}
+                </div>
+              </div>
             </div>
+
+            {challenge && (
+              <div className="rounded-xl border border-gravl-volt/25 bg-gravl-volt/[0.05] p-3">
+                <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-gravl-volt">
+                  <Trophy size={11} aria-hidden /> Reto {challenge.status === 'ACTIVE' ? 'activo' : 'próximo'}
+                </p>
+                <p className="mt-1 text-xs font-semibold text-white">{challenge.title}</p>
+                <div className="mt-2 h-1.5 w-full rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-1.5 rounded-full bg-gravl-volt"
+                    style={{ width: `${Math.min(100, ((challenge.currentValue ?? 0) / challenge.targetValue) * 100)}%` }}
+                  />
+                </div>
+                <p className="mt-1 text-[10px] text-gravl-text-muted">{challenge.rewardDescription}</p>
+              </div>
+            )}
+
+            {feed.length > 0 && (
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3">
+                <p className="mb-2 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-gravl-text-secondary">
+                  <Users size={11} aria-hidden /> Tu gimnasio ahora
+                </p>
+                <ul className="space-y-1.5">
+                  {feed.map((evt) => (
+                    <li key={evt.id} className="flex items-center gap-2 text-[10px] text-gravl-text-secondary">
+                      <Dumbbell size={10} className="shrink-0 text-gravl-text-muted" aria-hidden />
+                      <span className="truncate">
+                        <span className="font-medium text-white">{evt.memberName}</span> {evt.exercise}{' '}
+                        <span className="tabular-nums font-semibold text-white">{evt.weight} {evt.unit}</span>
+                        {evt.isPR && <span className="ml-1 text-gravl-volt">PR 🏆</span>}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="rounded-xl border border-gravl-cyan/25 bg-gravl-cyan/[0.05] p-3">
+              <p className="mb-1 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-gravl-cyan">
+                <Bell size={11} aria-hidden /> Push de {tenant.name}
+              </p>
+              <p className="text-[11px] leading-snug text-white">{push}</p>
+            </div>
+
+            <nav className="flex items-center justify-around border-t border-white/[0.06] pt-3" aria-hidden>
+              {[
+                { l: 'Entrenar', i: Home, a: true },
+                { l: 'Progreso', i: LineChart },
+                { l: 'Social', i: Users },
+                { l: 'Perfil', i: User },
+              ].map(({ l, i: Icon, a }) => (
+                <span key={l} className="flex flex-col items-center gap-0.5">
+                  <Icon size={15} className={a ? 'text-gravl-volt' : 'text-gravl-text-muted'} />
+                  <span className={`text-[8px] ${a ? 'font-semibold text-gravl-volt' : 'text-gravl-text-muted'}`}>{l}</span>
+                </span>
+              ))}
+            </nav>
           </div>
         </div>
       </div>
-    </div>
+    </aside>
   );
 }

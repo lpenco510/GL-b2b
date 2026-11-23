@@ -1,284 +1,375 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  challenges, leaderboard, organization, memberStats,
-} from '@/data/mockGravlB2B';
-import {
-  Trophy, Users, Target, Calendar, Gift, ChevronRight,
-  Medal, Flame, Dumbbell, Plus, TrendingUp,
-} from 'lucide-react';
-import type { ChallengeStatus } from '@/types/gravl-b2b';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useApp } from '@/context/AppContext';
+import { REFERENCE_NOW, leaderboard, locationName, locations, networkBenchmarks, organization } from '@/data/mockGravlB2B';
+import { scopeStats } from '@/data/selectors';
+import { fmtCompact, fmtDate, fmtInt } from '@/lib/format';
+import { cn } from '@/lib/cn';
+import { Avatar, Badge, Button, Card, CardHeader, Field, PageHeader, ProgressBar } from '@/components/ui/primitives';
+import { Modal } from '@/components/ui/Overlay';
+import type { ChallengeMetric, GymChallenge } from '@/types/gravl-b2b';
+import { Calendar, Dumbbell, Gift, Medal, Plus, Smartphone, Target, TrendingUp, Trophy, Users, type LucideIcon } from 'lucide-react';
 
-function statusBadge(status: ChallengeStatus) {
-  const map = {
-    ACTIVE: { bg: 'bg-gravl-emerald/10', text: 'text-gravl-emerald', label: '● Active' },
-    UPCOMING: { bg: 'bg-gravl-cyan/10', text: 'text-gravl-cyan', label: '◷ Upcoming' },
-    COMPLETED: { bg: 'bg-gravl-text-muted/10', text: 'text-gravl-text-muted', label: '✓ Completed' },
-  };
-  const s = map[status];
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${s.bg} ${s.text}`}>
-      {s.label}
-    </span>
-  );
+const metricMeta: Record<ChallengeMetric, { label: string; desc: string; unit: string; icon: LucideIcon; color: string; defaultTarget: number }> = {
+  WORKOUT_COUNT: { label: 'Constancia', desc: 'Cantidad de sesiones', unit: 'sesiones', icon: Target, color: '#C6FF00', defaultTarget: 12 },
+  STRENGTH_SCORE_GAIN: { label: 'Fuerza', desc: 'Mejora de Strength Score', unit: 'pts', icon: TrendingUp, color: '#38BDF8', defaultTarget: 20 },
+  TOTAL_VOLUME_KG: { label: 'Volumen', desc: 'Kilos colectivos', unit: 'kg', icon: Dumbbell, color: '#F59E0B', defaultTarget: 250_000 },
+};
+
+const statusTone = { ACTIVE: 'emerald', UPCOMING: 'cyan', COMPLETED: 'neutral' } as const;
+const statusLabel = { ACTIVE: 'Activo', UPCOMING: 'Próximo', COMPLETED: 'Finalizado' } as const;
+
+const isoDay = (offset: number) => new Date(REFERENCE_NOW.getTime() + offset * 86_400_000).toISOString().slice(0, 10);
+
+interface Draft {
+  metric: ChallengeMetric;
+  title: string;
+  target: number;
+  start: string;
+  end: string;
+  reward: string;
+  locationIds: string[];
 }
 
-function metricIcon(metric: string) {
-  switch (metric) {
-    case 'WORKOUT_COUNT': return <Target size={14} className="text-gravl-volt" />;
-    case 'STRENGTH_SCORE_GAIN': return <TrendingUp size={14} className="text-gravl-cyan" />;
-    case 'TOTAL_VOLUME_KG': return <Dumbbell size={14} className="text-gravl-amber" />;
-    default: return <Trophy size={14} />;
-  }
+const emptyDraft = (focus?: string): Draft => ({
+  metric: 'WORKOUT_COUNT',
+  title: focus ? `Reto ${focus}: 12 sesiones en 4 semanas` : '',
+  target: 12,
+  start: isoDay(1),
+  end: isoDay(29),
+  reward: focus ? `Clase grupal de ${focus.toLowerCase()} + kit de bandas` : '',
+  locationIds: [],
+});
+
+function validate(d: Draft) {
+  const e: Partial<Record<keyof Draft, string>> = {};
+  if (d.title.trim().length < 4) e.title = 'Poné un nombre de al menos 4 caracteres.';
+  if (!(d.target > 0)) e.target = 'El objetivo tiene que ser mayor a 0.';
+  if (!d.start || !d.end || d.end <= d.start) e.end = 'La fecha de fin tiene que ser posterior al inicio.';
+  if (d.reward.trim().length < 3) e.reward = 'Contales a los socios qué se ganan.';
+  return e;
+}
+
+function UrlIntents({ onOpen }: { onOpen: (focus?: string) => void }) {
+  const params = useSearchParams();
+  const isNew = params.get('new');
+  const focus = params.get('focus') ?? undefined;
+  useEffect(() => {
+    if (isNew) onOpen(focus);
+  }, [isNew, focus, onOpen]);
+  return null;
 }
 
 export default function CommunityPage() {
-  const [showWizard, setShowWizard] = useState(false);
+  const { challenges, addChallenge, addToast, setMobilePreviewOpen, selectedLocationId } = useApp();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<Draft>(emptyDraft());
+  const [touched, setTouched] = useState(false);
+  const errors = validate(draft);
+  const stats = scopeStats('all');
+
+  const openWizard = useCallback((focus?: string) => {
+    setDraft(emptyDraft(focus));
+    setTouched(false);
+    setOpen(true);
+  }, []);
+
+  const submit = () => {
+    setTouched(true);
+    if (Object.keys(errors).length) return;
+    const startsLater = draft.start > REFERENCE_NOW.toISOString().slice(0, 10);
+    const c: GymChallenge = {
+      id: `ch_${Date.now()}`,
+      organizationId: organization.id,
+      title: draft.title.trim(),
+      metric: draft.metric,
+      targetValue: draft.target,
+      startDate: draft.start,
+      endDate: draft.end,
+      participantsCount: 0,
+      rewardDescription: draft.reward.trim(),
+      status: startsLater ? 'UPCOMING' : 'ACTIVE',
+      currentValue: 0,
+      locationIds: draft.locationIds,
+    };
+    addChallenge(c);
+    setOpen(false);
+    addToast(`“${c.title}” publicado. Los socios lo ven en la app y reciben un push.`, 'success', {
+      label: 'Ver en la app',
+      onClick: () => setMobilePreviewOpen(true),
+    });
+  };
+
+  const board = leaderboard.filter((e) => selectedLocationId === 'all' || e.locationId === selectedLocationId);
+  const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
   return (
-    <div className="space-y-6 max-w-[1400px]">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gravl-text">Community, Groups & Challenges</h2>
-          <p className="text-sm text-gravl-text-muted mt-1">
-            Launch branded challenges and manage your gym&apos;s in-app community
-          </p>
-        </div>
-        <button
-          onClick={() => setShowWizard(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gravl-volt text-gravl-canvas text-sm font-semibold hover:bg-gravl-volt-hover transition-colors"
-        >
-          <Plus size={16} />
-          Create Challenge
-        </button>
-      </div>
+    <div className="space-y-6">
+      <Suspense fallback={null}>
+        <UrlIntents onOpen={openWizard} />
+      </Suspense>
 
-      {/* Gym Group Preview Card */}
-      <div className="gravl-card p-6">
-        <h3 className="text-sm font-semibold text-gravl-text mb-4 flex items-center gap-2">
-          <Users size={16} className="text-gravl-cyan" />
-          Official Gym Group — In-App Preview
-        </h3>
-        <div className="flex gap-6 items-start">
-          {/* Mobile Preview */}
-          <div className="w-[220px] flex-shrink-0 rounded-2xl border border-white/[0.09] overflow-hidden" style={{ background: '#0A0C10' }}>
-            {/* Cover Banner */}
-            <div className="h-20 bg-gradient-to-br from-gravl-volt/20 to-gravl-cyan/10 flex items-end justify-center pb-2">
-              <div className="w-12 h-12 rounded-xl bg-gravl-volt flex items-center justify-center -mb-6 border-2 border-gravl-canvas">
-                <span className="text-lg font-bold text-gravl-canvas">9F</span>
-              </div>
-            </div>
-            <div className="pt-8 px-4 pb-4 text-center">
-              <p className="text-sm font-bold text-gravl-text">{organization.name}</p>
-              <p className="text-[10px] text-gravl-text-muted mt-0.5">Official Group</p>
-              <div className="flex items-center justify-center gap-3 mt-3 text-[10px] text-gravl-text-secondary">
-                <span className="tabular-nums"><span className="font-semibold text-gravl-text">{memberStats.total}</span> members</span>
-                <span>•</span>
-                <span className="tabular-nums"><span className="font-semibold text-gravl-emerald">{memberStats.liveNow}</span> active</span>
-              </div>
-              <div className="mt-3 flex gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="w-6 h-6 rounded-full bg-gravl-surface border border-white/[0.09] -ml-1 first:ml-0" />
-                ))}
-                <span className="text-[9px] text-gravl-text-muted ml-1 self-center">+{memberStats.total - 5}</span>
-              </div>
-            </div>
-          </div>
+      <PageHeader
+        title="Comunidad & Retos"
+        description="Retos con tu marca que aparecen en la app de cada socio. La competencia sana es la palanca de adherencia más barata que existe."
+        actions={
+          <Button variant="primary" icon={Plus} onClick={() => openWizard()}>
+            Crear reto
+          </Button>
+        }
+      />
 
-          {/* Group Details */}
-          <div className="flex-1 space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {[
+          { l: 'Socios en el grupo oficial', v: fmtInt(stats.total), c: '#F8FAFC', i: Users },
+          { l: 'Sesiones / semana por socio', v: String(networkBenchmarks.avgWorkoutsPerWeek).replace('.', ','), c: '#C6FF00', i: Target },
+          { l: 'Strength Score promedio (30 d)', v: `+${networkBenchmarks.avgStrengthScoreGrowth}`, c: '#38BDF8', i: TrendingUp },
+        ].map((s) => (
+          <Card key={s.l} className="flex items-center gap-4 p-5">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03]">
+              <s.i size={18} style={{ color: s.c }} aria-hidden />
+            </span>
             <div>
-              <p className="text-sm text-gravl-text-secondary">
-                This is how <span className="text-gravl-text font-semibold">{organization.name}</span> appears inside the GRAVL iOS/Android app.
-                Members who scan the gym&apos;s QR code are automatically enrolled into this group and the monthly leaderboard.
-              </p>
+              <p className="tabular-nums text-2xl font-black" style={{ color: s.c }}>{s.v}</p>
+              <p className="text-xs text-gravl-text-muted">{s.l}</p>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="gravl-card p-3 text-center">
-                <p className="tabular-nums text-lg font-bold text-gravl-text">{memberStats.total}</p>
-                <p className="text-[10px] text-gravl-text-muted">Total Members</p>
-              </div>
-              <div className="gravl-card p-3 text-center">
-                <p className="tabular-nums text-lg font-bold text-gravl-volt">{memberStats.avgWorkoutsPerWeek}</p>
-                <p className="text-[10px] text-gravl-text-muted">Avg Workouts/Week</p>
-              </div>
-              <div className="gravl-card p-3 text-center">
-                <p className="tabular-nums text-lg font-bold text-gravl-cyan">+{memberStats.avgStrengthScoreGrowth}</p>
-                <p className="text-[10px] text-gravl-text-muted">Avg SS Growth</p>
-              </div>
-            </div>
-          </div>
-        </div>
+          </Card>
+        ))}
       </div>
 
-      {/* Active Challenges */}
-      <div>
-        <h3 className="text-lg font-bold text-gravl-text mb-4">Challenges</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {challenges.map((ch) => (
-            <div key={ch.id} className={`gravl-card p-5 ${ch.status === 'ACTIVE' ? 'border-gravl-volt/20' : ''}`}>
-              <div className="flex items-center justify-between mb-3">
-                {metricIcon(ch.metric)}
-                {statusBadge(ch.status)}
-              </div>
-              <h4 className="text-sm font-bold text-gravl-text mb-2">{ch.title}</h4>
+      <section>
+        <CardHeader icon={Trophy} title="Retos" subtitle={`${challenges.filter((c) => c.status === 'ACTIVE').length} activos · ${challenges.filter((c) => c.status === 'UPCOMING').length} próximos`} />
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {challenges.map((ch) => {
+            const meta = metricMeta[ch.metric];
+            const Icon = meta.icon;
+            const progress = ch.currentValue ?? 0;
+            const daysLeft = Math.max(0, Math.ceil((new Date(`${ch.endDate}T23:59:59-03:00`).getTime() - REFERENCE_NOW.getTime()) / 86_400_000));
+            return (
+              <Card key={ch.id} interactive className={cn('flex flex-col p-5', ch.status === 'ACTIVE' && 'border-gravl-volt/20')}>
+                <div className="flex items-center justify-between">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: `${meta.color}15`, color: meta.color }}>
+                    <Icon size={17} aria-hidden />
+                  </span>
+                  <Badge tone={statusTone[ch.status]}>{statusLabel[ch.status]}</Badge>
+                </div>
+                <h4 className="mt-3 text-sm font-bold text-white">{ch.title}</h4>
+                <p className="mt-0.5 text-[11px] text-gravl-text-muted">{meta.label} · objetivo {fmtCompact(ch.targetValue)} {meta.unit}</p>
 
-              {ch.status === 'ACTIVE' && ch.currentValue !== undefined && (
-                <div className="mb-3">
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-gravl-text-secondary">Progress</span>
-                    <span className="tabular-nums text-gravl-volt font-semibold">
-                      {ch.currentValue} / {ch.targetValue}
-                    </span>
+                {ch.status === 'ACTIVE' && (
+                  <div className="mt-4">
+                    <div className="mb-1.5 flex justify-between text-[11px]">
+                      <span className="text-gravl-text-secondary">Progreso promedio</span>
+                      <span className="tabular-nums font-bold text-gravl-volt">
+                        {fmtCompact(progress)} / {fmtCompact(ch.targetValue)}
+                      </span>
+                    </div>
+                    <ProgressBar value={progress} max={ch.targetValue} label={`Progreso de ${ch.title}`} />
                   </div>
-                  <div className="w-full h-2 bg-white/[0.06] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gravl-volt rounded-full transition-all"
-                      style={{ width: `${(ch.currentValue / ch.targetValue) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              )}
+                )}
 
-              <div className="space-y-2 text-xs text-gravl-text-secondary">
-                <div className="flex items-center gap-2">
-                  <Calendar size={12} />
-                  <span>{ch.startDate} — {ch.endDate}</span>
+                <ul className="mt-4 flex-1 space-y-2 text-xs text-gravl-text-secondary">
+                  <li className="flex items-center gap-2">
+                    <Calendar size={12} aria-hidden /> {fmtDate(ch.startDate + 'T12:00:00-03:00')} → {fmtDate(ch.endDate + 'T12:00:00-03:00')}
+                    {ch.status === 'ACTIVE' && <span className="text-gravl-text-muted">· quedan {daysLeft} días</span>}
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Users size={12} aria-hidden /> <span className="tabular-nums">{fmtInt(ch.participantsCount)}</span> participantes
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Gift size={12} className="mt-0.5 shrink-0" aria-hidden /> {ch.rewardDescription}
+                  </li>
+                </ul>
+                <div className="mt-4 flex flex-wrap gap-1.5 border-t border-white/[0.05] pt-3">
+                  {(ch.locationIds?.length ? ch.locationIds : ['all']).map((id) => (
+                    <Badge key={id}>{id === 'all' ? 'Toda la red' : locationName(id)}</Badge>
+                  ))}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Users size={12} />
-                  <span className="tabular-nums">{ch.participantsCount} participants</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Gift size={12} />
-                  <span>{ch.rewardDescription}</span>
-                </div>
-              </div>
-            </div>
-          ))}
+              </Card>
+            );
+          })}
         </div>
-      </div>
+      </section>
 
-      {/* Monthly Leaderboard */}
-      <div className="gravl-card p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Medal size={18} className="text-gravl-volt" />
-          <h3 className="text-lg font-bold text-gravl-text">Monthly Leaderboard</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      <Card className="p-5 sm:p-6">
+        <CardHeader
+          icon={Medal}
+          title="Ranking del mes"
+          subtitle={selectedLocationId === 'all' ? 'Toda la red' : `Filtrado por ${locationName(selectedLocationId)}`}
+          action={
+            <Button size="sm" variant="ghost" icon={Smartphone} onClick={() => setMobilePreviewOpen(true)}>
+              Ver en la app
+            </Button>
+          }
+        />
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[640px]">
+            <caption className="sr-only">Ranking mensual por Strength Score</caption>
             <thead>
-              <tr className="border-b border-white/[0.06]">
-                {['Rank', 'Member', 'Strength Score', 'Δ30d', 'Workouts', 'Volume (kg)'].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-[10px] font-semibold text-gravl-text-muted uppercase tracking-wider">{h}</th>
-                ))}
+              <tr className="border-b border-white/[0.06] text-left text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">
+                <th scope="col" className="px-3 py-3">#</th>
+                <th scope="col" className="px-3 py-3">Socio</th>
+                <th scope="col" className="px-3 py-3">Strength Score</th>
+                <th scope="col" className="px-3 py-3">Δ 30 d</th>
+                <th scope="col" className="px-3 py-3">Sesiones</th>
+                <th scope="col" className="px-3 py-3 text-right">Volumen</th>
               </tr>
             </thead>
             <tbody>
-              {leaderboard.map((entry) => (
-                <tr key={entry.rank} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors">
-                  <td className="px-4 py-3">
-                    <span className={`tabular-nums text-sm font-bold ${
-                      entry.rank <= 3 ? 'text-gravl-volt' : 'text-gravl-text-secondary'
-                    }`}>
-                      {entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : `#${entry.rank}`}
+              {board.map((e) => (
+                <tr key={e.rank} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+                  <td className="px-3 py-3">
+                    <span
+                      className={cn(
+                        'tabular-nums inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-black',
+                        e.rank === 1 && 'bg-gravl-volt text-gravl-canvas',
+                        e.rank === 2 && 'bg-slate-300 text-gravl-canvas',
+                        e.rank === 3 && 'bg-amber-600 text-white',
+                        e.rank > 3 && 'bg-white/[0.05] text-gravl-text-secondary',
+                      )}
+                    >
+                      {e.rank}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm font-medium text-gravl-text">{entry.name}</td>
-                  <td className="px-4 py-3 tabular-nums text-sm font-bold text-gravl-cyan">{entry.strengthScore}</td>
-                  <td className="px-4 py-3 tabular-nums text-sm text-gravl-emerald font-semibold">+{entry.delta}</td>
-                  <td className="px-4 py-3 tabular-nums text-sm text-gravl-text">{entry.workouts}</td>
-                  <td className="px-4 py-3 tabular-nums text-sm text-gravl-text-secondary">{entry.volume.toLocaleString()}</td>
+                  <td className="px-3 py-3">
+                    <span className="flex items-center gap-2.5">
+                      <Avatar name={e.name} size={28} />
+                      <span>
+                        <span className="block text-sm font-semibold text-white">{e.name}</span>
+                        <span className="block text-[10px] text-gravl-text-muted">{locationName(e.locationId)}</span>
+                      </span>
+                    </span>
+                  </td>
+                  <td className="tabular-nums px-3 py-3 text-sm font-bold text-gravl-cyan">{e.strengthScore}</td>
+                  <td className="tabular-nums px-3 py-3 text-sm font-semibold text-gravl-emerald">+{e.delta}</td>
+                  <td className="tabular-nums px-3 py-3 text-sm text-white">{e.workouts}</td>
+                  <td className="tabular-nums px-3 py-3 text-right text-sm text-gravl-text-secondary">{fmtInt(e.volume)} kg</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
-      {/* Challenge Creator Wizard Modal */}
-      {showWizard && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60" onClick={() => setShowWizard(false)}>
-          <div className="liquid-glass-static p-6 max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-gravl-text mb-4">Create New Challenge</h3>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs text-gravl-text-secondary mb-1.5">Challenge Type</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { label: 'Consistency', desc: 'Workout count', icon: Target },
-                    { label: 'Strength', desc: 'Score % gain', icon: TrendingUp },
-                    { label: 'Volume', desc: 'Collective kg', icon: Dumbbell },
-                  ].map((type) => {
-                    const Icon = type.icon;
-                    return (
-                      <button key={type.label} className="gravl-card p-3 text-center hover:border-gravl-volt/20 transition-colors">
-                        <Icon size={20} className="text-gravl-volt mx-auto mb-1" />
-                        <p className="text-xs font-semibold text-gravl-text">{type.label}</p>
-                        <p className="text-[9px] text-gravl-text-muted">{type.desc}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs text-gravl-text-secondary mb-1.5">Challenge Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g., 16 Workouts in 30 Days"
-                  className="w-full bg-gravl-surface border border-white/[0.09] rounded-xl px-4 py-2.5 text-sm text-gravl-text placeholder:text-gravl-text-muted focus:outline-none focus:border-gravl-volt/30"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-gravl-text-secondary mb-1.5">Start Date</label>
-                  <input
-                    type="date"
-                    className="w-full bg-gravl-surface border border-white/[0.09] rounded-xl px-4 py-2.5 text-sm text-gravl-text focus:outline-none focus:border-gravl-volt/30"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gravl-text-secondary mb-1.5">End Date</label>
-                  <input
-                    type="date"
-                    className="w-full bg-gravl-surface border border-white/[0.09] rounded-xl px-4 py-2.5 text-sm text-gravl-text focus:outline-none focus:border-gravl-volt/30"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs text-gravl-text-secondary mb-1.5">Reward Description</label>
-                <input
-                  type="text"
-                  placeholder="e.g., Free month, protein shake pack, merch..."
-                  className="w-full bg-gravl-surface border border-white/[0.09] rounded-xl px-4 py-2.5 text-sm text-gravl-text placeholder:text-gravl-text-muted focus:outline-none focus:border-gravl-volt/30"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowWizard(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-white/[0.09] text-sm text-gravl-text-secondary hover:text-gravl-text hover:bg-white/[0.04] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => setShowWizard(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-gravl-volt text-gravl-canvas text-sm font-semibold hover:bg-gravl-volt-hover transition-colors flex items-center justify-center gap-2"
-              >
-                <Trophy size={14} />
-                Launch Challenge
-              </button>
-            </div>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Crear reto"
+        description="Se publica en la app de los socios de las sedes elegidas, con push de lanzamiento."
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button variant="primary" icon={Trophy} onClick={submit}>Publicar reto</Button>
+          </>
+        }
+      >
+        <div className="space-y-5">
+          <div role="radiogroup" aria-label="Tipo de reto" className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {(Object.keys(metricMeta) as ChallengeMetric[]).map((k) => {
+              const m = metricMeta[k];
+              const active = draft.metric === k;
+              return (
+                <button
+                  key={k}
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setDraft((d) => ({ ...d, metric: k, target: m.defaultTarget }))}
+                  className={cn(
+                    'flex items-center gap-3 rounded-xl border p-3 text-left transition-colors sm:flex-col sm:items-start',
+                    active ? 'border-gravl-volt/50 bg-gravl-volt/[0.07]' : 'border-white/[0.08] hover:border-white/[0.16]',
+                  )}
+                >
+                  <m.icon size={18} style={{ color: m.color }} aria-hidden />
+                  <span>
+                    <span className="block text-sm font-bold text-white">{m.label}</span>
+                    <span className="block text-[11px] text-gravl-text-muted">{m.desc}</span>
+                  </span>
+                </button>
+              );
+            })}
           </div>
+
+          <Field label="Nombre del reto" htmlFor="ch-title" error={touched ? errors.title : undefined}>
+            <input
+              id="ch-title"
+              data-autofocus
+              value={draft.title}
+              onChange={(e) => set('title', e.target.value)}
+              placeholder="Ej.: 16 entrenamientos en 30 días"
+              aria-invalid={touched && !!errors.title}
+              className="gravl-input"
+            />
+          </Field>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Field label={`Objetivo (${metricMeta[draft.metric].unit})`} htmlFor="ch-target" error={touched ? errors.target : undefined}>
+              <input
+                id="ch-target"
+                type="number"
+                min={1}
+                value={draft.target}
+                onChange={(e) => set('target', Number(e.target.value))}
+                aria-invalid={touched && !!errors.target}
+                className="gravl-input tabular-nums"
+              />
+            </Field>
+            <Field label="Inicio" htmlFor="ch-start">
+              <input id="ch-start" type="date" value={draft.start} onChange={(e) => set('start', e.target.value)} className="gravl-input" />
+            </Field>
+            <Field label="Fin" htmlFor="ch-end" error={touched ? errors.end : undefined}>
+              <input id="ch-end" type="date" value={draft.end} onChange={(e) => set('end', e.target.value)} aria-invalid={touched && !!errors.end} className="gravl-input" />
+            </Field>
+          </div>
+
+          <Field label="Premio" htmlFor="ch-reward" error={touched ? errors.reward : undefined}>
+            <input
+              id="ch-reward"
+              value={draft.reward}
+              onChange={(e) => set('reward', e.target.value)}
+              placeholder="Ej.: mes gratis, pack de proteína, merch…"
+              aria-invalid={touched && !!errors.reward}
+              className="gravl-input"
+            />
+          </Field>
+
+          <fieldset>
+            <legend className="mb-1.5 text-xs font-semibold text-gravl-text-secondary">Sedes</legend>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                aria-pressed={draft.locationIds.length === 0}
+                onClick={() => set('locationIds', [])}
+                className={cn(
+                  'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
+                  draft.locationIds.length === 0 ? 'border-gravl-volt/50 bg-gravl-volt/10 text-gravl-volt' : 'border-white/[0.1] text-gravl-text-secondary hover:text-white',
+                )}
+              >
+                Toda la red
+              </button>
+              {locations.map((l) => {
+                const on = draft.locationIds.includes(l.id);
+                return (
+                  <button
+                    key={l.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => set('locationIds', on ? draft.locationIds.filter((x) => x !== l.id) : [...draft.locationIds, l.id])}
+                    className={cn(
+                      'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
+                      on ? 'border-gravl-volt/50 bg-gravl-volt/10 text-gravl-volt' : 'border-white/[0.1] text-gravl-text-secondary hover:text-white',
+                    )}
+                  >
+                    {l.shortName}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

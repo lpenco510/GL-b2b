@@ -1,26 +1,61 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import type { VerticalType } from '@/types/gravl-b2b';
+import React, { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
+import type {
+  GymChallenge,
+  GymMachine,
+  LocationScope,
+  NudgeRule,
+  VerticalType,
+} from '@/types/gravl-b2b';
+import {
+  challenges as seedChallenges,
+  integrationCards,
+  locations,
+  nudgeRules as seedNudgeRules,
+  REFERENCE_NOW,
+} from '@/data/mockGravlB2B';
+
+export type ToastType = 'success' | 'info' | 'warning';
+
+export interface Toast {
+  id: string;
+  message: string;
+  type: ToastType;
+  action?: { label: string; onClick: () => void };
+}
 
 interface AppContextType {
+  // ─── UI ────────────────────────────────────────────
   vertical: VerticalType;
   setVertical: (v: VerticalType) => void;
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
+  mobileNavOpen: boolean;
+  setMobileNavOpen: (open: boolean) => void;
   mobilePreviewOpen: boolean;
   setMobilePreviewOpen: (open: boolean) => void;
-  toasts: Toast[];
-  addToast: (message: string, type?: 'success' | 'info' | 'warning') => void;
-  removeToast: (id: string) => void;
-  selectedLocationId: string;
-  setSelectedLocationId: (id: string) => void;
-}
+  commandOpen: boolean;
+  setCommandOpen: (open: boolean) => void;
+  selectedLocationId: LocationScope;
+  setSelectedLocationId: (id: LocationScope) => void;
 
-interface Toast {
-  id: string;
-  message: string;
-  type: 'success' | 'info' | 'warning';
+  // ─── Toasts ────────────────────────────────────────
+  toasts: Toast[];
+  addToast: (message: string, type?: ToastType, action?: Toast['action']) => void;
+  removeToast: (id: string) => void;
+
+  // ─── Dominio (fuente única de verdad) ──────────────
+  getMachineStatus: (machine: GymMachine) => GymMachine['status'];
+  setMachineStatus: (machineId: string, status: GymMachine['status']) => void;
+  nudgeRules: NudgeRule[];
+  toggleNudgeRule: (id: string) => void;
+  nudgedAt: Record<string, string>;
+  markNudged: (userIds: string[]) => void;
+  challenges: GymChallenge[];
+  addChallenge: (c: GymChallenge) => void;
+  connectedIntegrations: Set<string>;
+  connectIntegration: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -31,38 +66,93 @@ export function useApp() {
   return ctx;
 }
 
+const initialMachineStatus: Record<string, GymMachine['status']> = Object.fromEntries(
+  locations.flatMap((l) => l.equipmentProfile.machines.map((m) => [m.machineId, m.status])),
+);
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [vertical, setVertical] = useState<VerticalType>('GYM_CHAIN');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [selectedLocationId, setSelectedLocationId] = useState<LocationScope>('all');
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [selectedLocationId, setSelectedLocationId] = useState('loc_palermo');
+  const [machineStatus, setMachineStatusMap] = useState(initialMachineStatus);
+  const [nudgeRules, setNudgeRules] = useState<NudgeRule[]>(seedNudgeRules);
+  const [nudgedAt, setNudgedAt] = useState<Record<string, string>>({});
+  const [challenges, setChallenges] = useState<GymChallenge[]>(seedChallenges);
+  const [connectedIntegrations, setConnected] = useState<Set<string>>(
+    () => new Set(integrationCards.filter((i) => i.status === 'connected').map((i) => i.id)),
+  );
+  const toastSeq = useRef(0);
 
   const toggleSidebar = useCallback(() => setSidebarCollapsed((p) => !p), []);
-
-  const addToast = useCallback((message: string, type: 'success' | 'info' | 'warning' = 'success') => {
-    const id = `toast_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 5000);
-  }, []);
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  return (
-    <AppContext.Provider
-      value={{
-        vertical, setVertical,
-        sidebarCollapsed, toggleSidebar,
-        mobilePreviewOpen, setMobilePreviewOpen,
-        toasts, addToast, removeToast,
-        selectedLocationId, setSelectedLocationId,
-      }}
-    >
-      {children}
-    </AppContext.Provider>
+  const addToast = useCallback(
+    (message: string, type: ToastType = 'success', action?: Toast['action']) => {
+      const id = `toast_${++toastSeq.current}`;
+      // Máximo 3 toasts visibles: los más viejos se descartan.
+      setToasts((prev) => [...prev.slice(-2), { id, message, type, action }]);
+      setTimeout(() => removeToast(id), action ? 7000 : 4500);
+    },
+    [removeToast],
   );
+
+  const getMachineStatus = useCallback(
+    (machine: GymMachine) => machineStatus[machine.machineId] ?? machine.status,
+    [machineStatus],
+  );
+
+  const setMachineStatus = useCallback((machineId: string, status: GymMachine['status']) => {
+    setMachineStatusMap((prev) => ({ ...prev, [machineId]: status }));
+  }, []);
+
+  const toggleNudgeRule = useCallback((id: string) => {
+    setNudgeRules((prev) => prev.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
+  }, []);
+
+  const markNudged = useCallback((userIds: string[]) => {
+    const ts = REFERENCE_NOW.toISOString();
+    setNudgedAt((prev) => {
+      const next = { ...prev };
+      for (const id of userIds) next[id] = ts;
+      return next;
+    });
+  }, []);
+
+  const addChallenge = useCallback((c: GymChallenge) => setChallenges((prev) => [c, ...prev]), []);
+
+  const connectIntegration = useCallback((id: string) => {
+    setConnected((prev) => new Set(prev).add(id));
+  }, []);
+
+  const value = useMemo<AppContextType>(
+    () => ({
+      vertical, setVertical,
+      sidebarCollapsed, toggleSidebar,
+      mobileNavOpen, setMobileNavOpen,
+      mobilePreviewOpen, setMobilePreviewOpen,
+      commandOpen, setCommandOpen,
+      selectedLocationId, setSelectedLocationId,
+      toasts, addToast, removeToast,
+      getMachineStatus, setMachineStatus,
+      nudgeRules, toggleNudgeRule,
+      nudgedAt, markNudged,
+      challenges, addChallenge,
+      connectedIntegrations, connectIntegration,
+    }),
+    [
+      vertical, sidebarCollapsed, toggleSidebar, mobileNavOpen, mobilePreviewOpen, commandOpen,
+      selectedLocationId, toasts, addToast, removeToast, getMachineStatus, setMachineStatus,
+      nudgeRules, toggleNudgeRule, nudgedAt, markNudged, challenges, addChallenge,
+      connectedIntegrations, connectIntegration,
+    ],
+  );
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
