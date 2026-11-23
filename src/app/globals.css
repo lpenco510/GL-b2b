@@ -1,26 +1,145 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ─── GRAVL Design System Tokens (Tailwind v4 @theme) ─── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-gravl-canvas: #0A0C10;
+  --color-gravl-surface: #11141A;
+  --color-gravl-card: #161A22;
+  --color-gravl-card-hover: #1C2130;
+  --color-gravl-volt: #C6FF00;
+  --color-gravl-volt-hover: #D4FF33;
+  --color-gravl-cyan: #38BDF8;
+  --color-gravl-emerald: #22C55E;
+  --color-gravl-amber: #F59E0B;
+  --color-gravl-crimson: #EF4444;
+  --color-gravl-text: #F8FAFC;
+  --color-gravl-text-secondary: #94A3B8;
+  --color-gravl-text-muted: #64748B;
+  --color-gravl-border: rgba(255, 255, 255, 0.09);
+  --color-gravl-border-hover: rgba(255, 255, 255, 0.22);
+  --color-gravl-glass: rgba(24, 29, 38, 0.65);
+  --color-gravl-glass-hover: rgba(34, 41, 54, 0.78);
+
+  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Inter', monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base Styles ─── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--color-gravl-canvas);
+  color: var(--color-gravl-text);
+  font-family: var(--font-sans);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-gravl-canvas);
+  color: var(--color-gravl-text);
+  min-height: 100vh;
+}
+
+/* ─── Liquid Glass Utility Classes ─── */
+.liquid-glass {
+  background: var(--color-gravl-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-gravl-border);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.liquid-glass:hover {
+  border-color: var(--color-gravl-border-hover);
+  background: var(--color-gravl-glass-hover);
+}
+
+.liquid-glass-static {
+  background: var(--color-gravl-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-gravl-border);
+  border-radius: 12px;
+}
+
+/* ─── Card with Gradient ─── */
+.gravl-card {
+  background: var(--color-gravl-card);
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  border: 1px solid var(--color-gravl-border);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.gravl-card:hover {
+  border-color: var(--color-gravl-border-hover);
+}
+
+/* ─── Tabular Nums for Telemetry ─── */
+.tabular-nums {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Pulse Animation ─── */
+@keyframes gravl-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes gravl-ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-gravl-pulse {
+  animation: gravl-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-gravl-ping {
+  animation: gravl-ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* ─── Custom Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-gravl-canvas);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ─── Toast Animation ─── */
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+.toast-enter {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.toast-exit {
+  animation: slideOutRight 0.3s ease-in;
 }
