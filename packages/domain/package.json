@@ -1,0 +1,16 @@
+{
+  "name": "@gravl/domain",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Reglas de negocio puras (sin React, sin I/O): acuerdos, pricing, pol\u00edticas de contacto, mercados, consentimiento.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "tsx --test src/*.test.ts"
+  }
+}

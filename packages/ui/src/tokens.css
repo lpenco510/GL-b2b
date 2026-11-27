@@ -1,0 +1,216 @@
+/*
+ * GRAVL design tokens · B2B
+ * Calcados de gravl.ai: tinta #080e18, lima #d2fe0b, radio .875rem,
+ * Inter Tight para UI y Barlow Condensed para cifras (como "entreno listo" / "12,480 kg").
+ *
+ * Reglas:
+ *  - Claro es el tema por defecto (igual que la marca). Oscuro = modo "sala".
+ *  - El lima es un RELLENO (botón primario, barra, foco). Nunca texto sobre blanco:
+ *    para texto/íconos de acento se usa --accent (oliva en claro, lima en oscuro).
+ *  - Todo CSS propio vive en @layer: en Tailwind v4 lo que está fuera de capa pisa las utilidades.
+ */
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@theme inline {
+  /* Constantes de marca */
+  --color-gravl-ink: #080e18;
+  --color-gravl-lime: #d2fe0b;
+
+  /* Semánticos (cambian con el tema) */
+  --color-gravl-canvas: var(--g-canvas);
+  --color-gravl-surface: var(--g-surface);
+  --color-gravl-card: var(--g-card);
+  --color-gravl-raised: var(--g-raised);
+  --color-gravl-text: var(--g-fg);
+  --color-gravl-text-secondary: var(--g-fg-2);
+  --color-gravl-text-muted: var(--g-fg-3);
+  --color-gravl-line: var(--g-line);
+
+  --color-gravl-volt: var(--g-accent);
+  --color-gravl-emerald: var(--g-good);
+  --color-gravl-amber: var(--g-warn);
+  --color-gravl-crimson: var(--g-bad);
+  --color-gravl-cyan: var(--g-info);
+  --color-gravl-violet: var(--g-violet);
+
+  --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: var(--font-barlow), 'Arial Narrow', ui-sans-serif, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-gravl: 0.875rem;
+
+  --animate-fade-in: gravl-fade-in 0.2s ease-out both;
+  --animate-slide-up: gravl-slide-up 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-slide-in-right: gravl-slide-in-right 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-slide-in-left: gravl-slide-in-left 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+:root,
+[data-theme='light'] {
+  --g-canvas: #f4f5f4;
+  --g-surface: #ffffff;
+  --g-card: #ffffff;
+  --g-raised: #f4f5f4;
+  --g-fg: #080e18;
+  --g-fg-2: rgba(8, 14, 24, 0.7);
+  --g-fg-3: rgba(8, 14, 24, 0.5);
+  --g-line: rgba(8, 14, 24, 0.09);
+  --g-accent: #5d7a00;
+  --g-good: #1a8f4a;
+  --g-warn: #d45a00;
+  --g-bad: #e0244a;
+  --g-info: #1f6fd1;
+  --g-violet: #6d4ad8;
+  --g-shadow: 0 1px 2px rgba(8, 14, 24, 0.04), 0 1px 1px rgba(8, 14, 24, 0.03);
+  --g-shadow-hover: 0 10px 28px -12px rgba(8, 14, 24, 0.22), 0 2px 6px rgba(8, 14, 24, 0.05);
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --g-canvas: #0b0b0d;
+  --g-surface: #111113;
+  --g-card: #161617;
+  --g-raised: #1f1f22;
+  --g-fg: #f4f5f4;
+  --g-fg-2: rgba(244, 245, 244, 0.68);
+  --g-fg-3: rgba(244, 245, 244, 0.45);
+  --g-line: rgba(255, 255, 255, 0.08);
+  --g-accent: #d2fe0b;
+  --g-good: #3ddc84;
+  --g-warn: #ff8a3d;
+  --g-bad: #ff4d6d;
+  --g-info: #4ea2ff;
+  --g-violet: #a78bfa;
+  --g-shadow: 0 0 0 transparent;
+  --g-shadow-hover: 0 14px 32px -14px rgba(0, 0, 0, 0.8);
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    background: var(--g-canvas);
+    color: var(--g-fg);
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background: var(--g-canvas);
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+  ::selection { background: #d2fe0b; color: #080e18; }
+  :focus-visible { outline: 2px solid #d2fe0b; outline-offset: 2px; border-radius: 8px; }
+  [data-theme='light'] :focus-visible { outline-color: #080e18; }
+  button:not(:disabled), [role='button']:not([aria-disabled='true']), select { cursor: pointer; }
+  select option { background: var(--g-surface); color: var(--g-fg); }
+  /* Edge/Chrome en Windows agregan su propio "ojo" y "x" a los campos de contraseña:
+     los ocultamos para que quede un solo control (el nuestro). */
+  input[type='password']::-ms-reveal,
+  input[type='password']::-ms-clear { display: none; }
+  input::-webkit-credentials-auto-fill-button,
+  input::-webkit-contacts-auto-fill-button { visibility: hidden; display: none !important; pointer-events: none; position: absolute; right: 0; }
+  input[type='range'] { accent-color: #080e18; }
+  [data-theme='dark'] input[type='range'] { accent-color: #d2fe0b; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--g-line); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--g-fg-3); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+}
+
+@layer components {
+  /* Superficie base: plana, borde fino, sin brillos. */
+  .gravl-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-gravl);
+    background: var(--g-card);
+    border: 1px solid var(--g-line);
+    box-shadow: var(--g-shadow);
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
+  }
+  /* Solo lo clickeable se mueve: un lift corto y una sombra que "aterriza". */
+  .gravl-card-interactive:hover { transform: translateY(-2px); box-shadow: var(--g-shadow-hover); border-color: color-mix(in srgb, var(--g-fg) 16%, transparent); }
+  .gravl-card-interactive:active { transform: translateY(0); transition-duration: 0.08s; }
+
+  .gravl-glass {
+    background: var(--g-surface);
+    border: 1px solid var(--g-line);
+    border-radius: var(--radius-gravl);
+    box-shadow: 0 24px 60px -16px rgba(8, 14, 24, 0.35);
+  }
+
+  /* Cifras: Barlow Condensed como en la app ("12,480 kg"). */
+  .gravl-num { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; line-height: 0.9; }
+  .gravl-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--g-fg-3); }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+
+  .gravl-input {
+    width: 100%;
+    background: var(--g-surface);
+    border: 1px solid var(--g-line);
+    border-radius: 12px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    color: var(--g-fg);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .gravl-input::placeholder { color: var(--g-fg-3); }
+  .gravl-input:focus { outline: none; border-color: var(--g-fg); box-shadow: 0 0 0 3px color-mix(in srgb, #d2fe0b 55%, transparent); }
+  .gravl-input[aria-invalid='true'] { border-color: var(--g-bad); }
+
+  .kbd {
+    font-family: var(--font-sans); font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 6px;
+    border: 1px solid var(--g-line); background: var(--g-raised); color: var(--g-fg-2);
+  }
+
+  /* Fila de tabla: fondo suave + barra lima que entra desde la izquierda (como el foco de la app). */
+  .gravl-row { transition: background-color 0.2s ease, box-shadow 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .gravl-row:hover { background: color-mix(in srgb, var(--g-fg) 3%, transparent); box-shadow: inset 3px 0 0 0 #d2fe0b; }
+
+  /* Entrada de página: los bloques aparecen en cascada, una sola vez. */
+  .gravl-stagger > * { animation: gravl-slide-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+  .gravl-stagger > *:nth-child(2) { animation-delay: 0.05s; }
+  .gravl-stagger > *:nth-child(3) { animation-delay: 0.1s; }
+  .gravl-stagger > *:nth-child(4) { animation-delay: 0.15s; }
+  .gravl-stagger > *:nth-child(5) { animation-delay: 0.2s; }
+  .gravl-stagger > *:nth-child(n + 6) { animation-delay: 0.25s; }
+
+  /* Barras que crecen al aparecer y sparklines que se dibujan. */
+  .gravl-grow { transform-origin: left center; animation: gravl-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .gravl-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: gravl-draw 1.1s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards; }
+
+  /* Ícono o flecha que acompaña el hover del contenedor .group */
+  .gravl-nudge { transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .group:hover .gravl-nudge { transform: translateX(3px); }
+}
+
+/* Login */
+.gravl-login-dots {
+  background-image: radial-gradient(rgba(8, 14, 24, 0.13) 1px, transparent 1.3px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse at 50% 40%, black 30%, transparent 75%);
+  animation: gravl-dots-drift 40s linear infinite;
+}
+.gravl-login-in { animation: gravl-slide-up 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.gravl-login-shake { animation: gravl-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+@keyframes gravl-dots-drift { to { background-position: 22px 22px; } }
+@keyframes gravl-shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-6px); }
+  40%, 60% { transform: translateX(6px); }
+}
+@keyframes gravl-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes gravl-draw { to { stroke-dashoffset: 0; } }
+@keyframes gravl-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes gravl-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes gravl-slide-in-right { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes gravl-slide-in-left { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
+
+nextjs-portal { display: none !important; }
