@@ -3,8 +3,6 @@ import { Barlow_Condensed, Inter_Tight } from 'next/font/google';
 import { InlineScript, themeInitScript } from '@gravl/ui';
 
 import './globals.css';
-import { AppProvider } from '@/context/AppContext';
-import ClientLayout from '@/components/layout/ClientLayout';
 
 // Tipografías de gravl.ai: Inter Tight (UI) + Barlow Condensed (cifras y titulares).
 const interTight = Inter_Tight({ variable: '--font-inter-tight', subsets: ['latin'], weight: ['400', '500', '600', '700'] });
@@ -29,9 +27,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         <InlineScript html={themeInitScript} />
       </head>
       <body className="min-h-full">
-        <AppProvider>
-          <ClientLayout>{children}</ClientLayout>
-        </AppProvider>
+        {children}
       </body>
     </html>
   );

@@ -184,6 +184,22 @@
   .group:hover .gravl-nudge { transform: translateX(3px); }
 }
 
+/* Login */
+.gravl-login-dots {
+  background-image: radial-gradient(rgba(8, 14, 24, 0.13) 1px, transparent 1.3px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse at 50% 40%, black 30%, transparent 75%);
+  animation: gravl-dots-drift 40s linear infinite;
+}
+.gravl-login-in { animation: gravl-slide-up 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.gravl-login-shake { animation: gravl-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+@keyframes gravl-dots-drift { to { background-position: 22px 22px; } }
+@keyframes gravl-shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-6px); }
+  40%, 60% { transform: translateX(6px); }
+}
 @keyframes gravl-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes gravl-draw { to { stroke-dashoffset: 0; } }
 @keyframes gravl-fade-in { from { opacity: 0; } to { opacity: 1; } }

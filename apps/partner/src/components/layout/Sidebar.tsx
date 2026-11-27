@@ -8,12 +8,14 @@ import { demoTenants, formCheckInbox, locations, membersInScope, scopeStats } fr
 import { nudgeDecisionFor } from '@gravl/domain';
 import { GravlIcon, GravlWordmark, cn } from '@gravl/ui';
 import { navByVertical, verticalMeta } from './nav';
-import { useSwitchTenant, useTenant } from './useTenant';
+import { useBranding, useSwitchTenant, useTenant } from './useTenant';
+import { PartnerIso } from './PartnerMark';
 import { Check, ChevronLeft, ChevronRight, ChevronsUpDown, Smartphone, X } from 'lucide-react';
 
 function TenantSwitcher({ collapsed }: { collapsed: boolean }) {
   const tenant = useTenant();
   const switchTenant = useSwitchTenant();
+  const brand = useBranding();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -41,13 +43,11 @@ function TenantSwitcher({ collapsed }: { collapsed: boolean }) {
           collapsed && 'justify-center border-transparent bg-transparent p-1',
         )}
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-gravl-ink text-[12px] font-bold tracking-tight text-white dark:bg-gravl-text dark:text-gravl-ink">
-          {tenant.shortName}
-        </span>
+        <PartnerIso size={36} />
         {!collapsed && (
           <>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[14px] font-semibold text-gravl-text">{tenant.name}</span>
+              <span className="block truncate text-[14px] font-semibold text-gravl-text">{brand.name}</span>
               <span className="block truncate text-xs text-gravl-text-muted">{tenant.subtitle}</span>
             </span>
             <ChevronsUpDown size={14} className="shrink-0 text-gravl-text-muted" aria-hidden />

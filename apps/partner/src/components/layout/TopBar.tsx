@@ -10,8 +10,9 @@ import { cn, tint } from '@gravl/ui';
 import { LiveDot, ThemeToggle } from '@gravl/ui';
 import type { AlertSeverity } from '@gravl/domain';
 import { useDeal, useVertical } from './useTenant';
+import { PartnerLogo } from './PartnerMark';
 import { verticalMeta } from './nav';
-import { AlertTriangle, Bell, CheckCircle2, ChevronDown, Info, MapPin, Menu, Search, Siren } from 'lucide-react';
+import { AlertTriangle, Bell, CheckCircle2, ChevronDown, Info, LogOut, MapPin, Menu, Search, Siren } from 'lucide-react';
 
 const severityStyle: Record<AlertSeverity, { icon: typeof Info; color: string }> = {
   critical: { icon: Siren, color: 'var(--color-gravl-crimson)' },
@@ -129,6 +130,9 @@ export default function TopBar() {
         <Menu size={18} />
       </button>
 
+      <PartnerLogo height={18} className="hidden shrink-0 sm:inline-flex" />
+      <span className="hidden h-6 w-px bg-gravl-line sm:block" aria-hidden />
+
       {vertical === 'GYM_CHAIN' ? (
         <div className="flex min-w-0 items-center gap-3">
           <label className="relative flex items-center gap-2 rounded-xl border border-gravl-line bg-gravl-card py-1.5 pl-3 pr-2 transition-colors duration-200 focus-within:border-gravl-text/40 hover:border-gravl-text/25">
@@ -185,6 +189,11 @@ export default function TopBar() {
 
       <ThemeToggle />
       <NotificationsMenu />
+      <form action="/api/auth/logout" method="post">
+        <button type="submit" aria-label="Cerrar sesión" title="Cerrar sesión" className="flex h-9 w-9 items-center justify-center rounded-xl text-gravl-text-secondary transition-colors hover:bg-gravl-text/[0.06] hover:text-gravl-text">
+          <LogOut size={16} />
+        </button>
+      </form>
     </header>
   );
 }

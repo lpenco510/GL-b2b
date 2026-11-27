@@ -40,3 +40,20 @@ export function useSwitchTenant() {
 export function tenantForVertical(v: VerticalType) {
   return demoTenants.find((t) => t.vertical === v) ?? demoTenants[0];
 }
+
+/** Marca efectiva del partner: valores por defecto + lo editado en Configuración. */
+export function useBranding() {
+  const tenant = useTenant();
+  const { brandOverrides } = useApp();
+  const o = brandOverrides[tenant.id] ?? {};
+  return {
+    tenantId: tenant.id,
+    name: o.name || tenant.name,
+    shortName: tenant.shortName,
+    logoUrl: o.logoUrl ?? tenant.branding.logoUrl,
+    isoUrl: o.isoUrl ?? tenant.branding.isoUrl,
+    brandColor: o.brandColor || tenant.branding.brandColor,
+    welcome: o.welcome || tenant.branding.welcome,
+    customized: Object.keys(o).length > 0,
+  };
+}

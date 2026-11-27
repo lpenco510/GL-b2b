@@ -4,7 +4,7 @@ import React, { type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { GravlIcon, GravlWordmark, ThemeToggle, cn } from '@gravl/ui';
-import { Briefcase, Cable, Globe2, LayoutGrid, ShieldAlert } from 'lucide-react';
+import { Briefcase, Cable, Globe2, LayoutGrid, LogOut, ShieldAlert } from 'lucide-react';
 
 const nav = [
   { href: '/portfolio', label: 'Portafolio', icon: LayoutGrid },
@@ -54,6 +54,11 @@ export default function ConsoleShell({ children }: { children: ReactNode }) {
           <div className="flex-1" />
           <span className="hidden text-xs text-gravl-text-muted sm:inline">staff@gravl.ai</span>
           <ThemeToggle />
+          <form action="/api/auth/logout" method="post">
+            <button type="submit" aria-label="Cerrar sesión" title="Cerrar sesión" className="flex h-9 w-9 items-center justify-center rounded-xl text-gravl-text-secondary transition-colors hover:bg-gravl-text/[0.06] hover:text-gravl-text">
+              <LogOut size={16} />
+            </button>
+          </form>
         </div>
       </header>
       <main className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 xl:px-8">{children}</main>

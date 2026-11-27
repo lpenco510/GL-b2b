@@ -6,6 +6,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   QrCode,
+  Settings,
   Trophy,
   type LucideIcon,
 } from 'lucide-react';
@@ -28,6 +29,7 @@ export interface NavGroup {
 const shared = {
   community: { href: '/community', label: 'Comunidad & Retos', icon: Trophy, keywords: 'retos challenges ranking leaderboard grupo' },
   plan: { href: '/plan', label: 'Acuerdo & Activación', icon: QrCode, keywords: 'qr billing facturación asientos integraciones roi' },
+  settings: { href: '/settings', label: 'Configuración', icon: Settings, keywords: 'marca logo color usuarios roles seguridad' },
 } satisfies Record<string, NavItem>;
 
 export const navByVertical: Record<VerticalType, NavGroup[]> = {
@@ -41,6 +43,7 @@ export const navByVertical: Record<VerticalType, NavGroup[]> = {
       ],
     },
     { label: 'Crecimiento', items: [shared.community, shared.plan] },
+    { label: 'Cuenta', items: [shared.settings] },
   ],
   CORPORATE_WELLNESS: [
     {
@@ -48,6 +51,7 @@ export const navByVertical: Record<VerticalType, NavGroup[]> = {
       items: [{ href: '/corporate', label: 'Corporate Wellness', icon: Briefcase, keywords: 'empleados readiness burnout departamentos' }],
     },
     { label: 'Programa', items: [shared.community, shared.plan] },
+    { label: 'Cuenta', items: [shared.settings] },
   ],
   COACH_STUDIO: [
     {
@@ -55,6 +59,7 @@ export const navByVertical: Record<VerticalType, NavGroup[]> = {
       items: [{ href: '/coach', label: 'Coach Studio', icon: GraduationCap, badgeKey: 'formChecks', keywords: 'clientes 1rm rpe form check' }],
     },
     { label: 'Negocio', items: [shared.community, shared.plan] },
+    { label: 'Cuenta', items: [shared.settings] },
   ],
 };
 

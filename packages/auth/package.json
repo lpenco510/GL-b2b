@@ -1,0 +1,14 @@
+{
+  "name": "@gravl/auth",
+  "version": "0.4.0",
+  "private": true,
+  "description": "Sesión firmada (HMAC-SHA256, Web Crypto), comparación en tiempo constante y rate limit de login. Sin dependencias.",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "tsx --test src/*.test.ts"
+  }
+}

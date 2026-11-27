@@ -18,7 +18,9 @@
     "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "recharts": "^3.11.1"
+    "recharts": "^3.11.1",
+    "@gravl/auth": "*",
+    "@gravl/gravl-api": "*"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",

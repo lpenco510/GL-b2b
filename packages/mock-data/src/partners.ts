@@ -12,6 +12,8 @@ export interface DemoTenant {
   vertical: VerticalType;
   subtitle: string;
   accent: string;
+  /** Marca del partner (co-branding). Editable en Configuración. */
+  branding: { logoUrl?: string; isoUrl?: string; brandColor: string; welcome: string };
   deal: Deal;
 }
 
@@ -22,6 +24,7 @@ function deal(segment: PartnerSegment, partnerId: string, market: MarketCode, si
 export const demoTenants: DemoTenant[] = [
   {
     id: 'p_sportclub', name: 'SportClub', shortName: 'SC', vertical: 'GYM_CHAIN', subtitle: 'Piloto · 12 sedes AMBA', accent: '#d2fe0b',
+    branding: { logoUrl: '/partners/sportclub-logo.png', isoUrl: '/partners/sportclub-iso.png', brandColor: '#e30613', welcome: 'SportClub × GRAVL: tu plan de fuerza, en cualquier sede.' },
     deal: deal('REGIONAL_CHAIN', 'p_sportclub', 'AR', '2026-12-01T00:00:00Z', {
       whiteLabel: false,
       specialTerms: [
@@ -46,11 +49,13 @@ export const demoTenants: DemoTenant[] = [
     }),
   },
   {
-    id: 'p_nimbus', name: 'Nimbus Tech LATAM', shortName: 'NT', vertical: 'CORPORATE_WELLNESS', subtitle: 'Corporate · 262 empleados', accent: '#38BDF8',
+    id: 'p_nimbus', name: 'Nimbus Tech LATAM', shortName: 'NT', vertical: 'CORPORATE_WELLNESS', subtitle: 'Empresa ficticia · 262 empleados', accent: '#38BDF8',
+    branding: { brandColor: '#2563eb', welcome: 'Tu beneficio de entrenamiento en Nimbus.' },
     deal: deal('CORPORATE', 'p_nimbus', 'AR', '2026-02-01T00:00:00Z', { specialTerms: ['Reporte trimestral para dirección'] }),
   },
   {
-    id: 'p_fuerza', name: 'Fuerza Studio', shortName: 'FS', vertical: 'COACH_STUDIO', subtitle: 'Coach · 24 clientes', accent: '#A78BFA',
+    id: 'p_fuerza', name: 'Fuerza Studio', shortName: 'FS', vertical: 'COACH_STUDIO', subtitle: 'Coach ficticio · 24 clientes', accent: '#A78BFA',
+    branding: { brandColor: '#7c3aed', welcome: 'Entrená con el plan de tu coach.' },
     deal: deal('COACH', 'p_fuerza', 'AR', '2026-09-10T00:00:00Z'),
   },
 ];

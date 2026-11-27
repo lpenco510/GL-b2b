@@ -11,6 +11,7 @@ import { Badge, Button, Card, CardHeader, KpiTile, PageHeader, ProgressBar, cn }
 import RecommendedActions from '@/components/dashboard/RecommendedActions';
 import PeakHeatmap from '@/components/dashboard/PeakHeatmap';
 import LiveFeed from '@/components/dashboard/LiveFeed';
+import { csvCell } from '@gravl/auth';
 
 type TooltipPayload = { name?: string; value?: number; color?: string };
 
@@ -33,7 +34,7 @@ function RetentionTooltip({ active, payload, label }: { active?: boolean; payloa
 }
 
 function exportSummary(rows: [string, string | number][]) {
-  const csv = ['Métrica,Valor', ...rows.map(([k, v]) => `"${k}","${v}"`)].join('\n');
+  const csv = ['Métrica,Valor', ...rows.map(([k, v]) => `${csvCell(k)},${csvCell(v)}`)].join('\n');
   const url = URL.createObjectURL(new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8' }));
   const a = document.createElement('a');
   a.href = url;

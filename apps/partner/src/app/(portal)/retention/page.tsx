@@ -7,6 +7,7 @@ import { locationName, members, nudgeTemplates } from '@gravl/mock-data';
 import { inSegment, membersInScope, segmentCount, type MemberSegment } from '@gravl/mock-data';
 import { cancelIntentLabel, nudgeDecisionFor, policyFor, type Deal } from '@gravl/domain';
 import { useDeal } from '@/components/layout/useTenant';
+import { csvCell } from '@gravl/auth';
 import { daysSince, fmtInt, fmtPct, fmtRelative } from '@gravl/domain';
 import { cn, tint } from '@gravl/ui';
 import { Avatar, Badge, Button, Card, CardHeader, EmptyState, PageHeader, ProgressBar, Toggle } from '@gravl/ui';
@@ -70,7 +71,7 @@ function exportCsv(rows: B2BMemberTelemetry[]) {
   const header = ['ID', 'Nombre', 'Sede', 'Estado', 'Riesgo %', 'Última sesión', 'Sesiones 30d', 'Racha (sem)', 'Strength Score', 'Δ30d'];
   const lines = rows.map((m) =>
     [m.userId, m.fullName, locationName(m.locationId), m.status, m.churnRisk, m.lastWorkoutAt.slice(0, 10), m.workoutsLast30Days, m.currentStreakWeeks, m.strengthScore, m.strengthScoreDelta30d]
-      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .map(csvCell)
       .join(','),
   );
   const url = URL.createObjectURL(new Blob([`﻿${[header.join(','), ...lines].join('\n')}`], { type: 'text/csv;charset=utf-8' }));

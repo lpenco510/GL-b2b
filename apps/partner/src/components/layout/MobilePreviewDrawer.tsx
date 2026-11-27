@@ -4,7 +4,7 @@ import React, { useLayoutEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { liveWorkoutFeed, locationById, locations, nudgeTemplates } from '@gravl/mock-data';
 import { GravlIcon } from '@gravl/ui';
-import { useTenant } from './useTenant';
+import { useBranding, useTenant } from './useTenant';
 import { Bell, Dumbbell, LineChart, Trophy, User, Users, X } from 'lucide-react';
 
 /**
@@ -15,6 +15,7 @@ import { Bell, Dumbbell, LineChart, Trophy, User, Users, X } from 'lucide-react'
 export default function MobilePreviewDrawer() {
   const { mobilePreviewOpen, setMobilePreviewOpen, challenges, selectedLocationId } = useApp();
   const tenant = useTenant();
+  const brand = useBranding();
   const location = selectedLocationId === 'all' ? locations[0] : locationById(selectedLocationId) ?? locations[0];
   const challenge = challenges.find((c) => c.status === 'ACTIVE') ?? challenges[0];
   const push = nudgeTemplates[0].body.replace('{gym}', tenant.name).replace('{name}', 'Sofía');
@@ -58,10 +59,17 @@ export default function MobilePreviewDrawer() {
               <div className="flex items-center gap-2">
                 <GravlIcon size={22} />
                 <span className="text-white/30">×</span>
-                <span className="rounded-md bg-white px-1.5 py-0.5 text-[10px] font-bold text-[#080e18]">{tenant.shortName}</span>
+                {brand.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={brand.logoUrl} alt={brand.name} className="h-[18px] w-auto rounded bg-white px-1 py-0.5" />
+                ) : (
+                  <span className="rounded-md px-1.5 py-0.5 text-[10px] font-bold text-white" style={{ background: brand.brandColor }}>{tenant.shortName}</span>
+                )}
               </div>
               <span className="text-[11px] text-white/50">{tenant.vertical === 'GYM_CHAIN' ? location.name : tenant.name}</span>
             </div>
+
+            <p className="text-[12px] text-white/60">{brand.welcome}</p>
 
             {/* Semana */}
             <div className="rounded-2xl bg-white/[0.06] p-3.5">
@@ -103,7 +111,7 @@ export default function MobilePreviewDrawer() {
             {challenge && (
               <div className="rounded-2xl border border-[#d2fe0b]/30 bg-[#d2fe0b]/[0.07] p-3.5">
                 <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-[#d2fe0b]">
-                  <Trophy size={11} aria-hidden /> Reto {tenant.name}
+                  <Trophy size={11} aria-hidden /> Reto {brand.name}
                 </p>
                 <p className="mt-1 text-[13px] font-semibold">{challenge.title}</p>
                 <div className="mt-2 h-1.5 rounded-full bg-white/10">
@@ -130,7 +138,7 @@ export default function MobilePreviewDrawer() {
 
             <div className="rounded-2xl bg-white p-3 text-[#080e18]">
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.06em] text-[#080e18]/50">
-                <Bell size={11} aria-hidden /> {tenant.name} · ahora
+                <Bell size={11} aria-hidden /> {brand.name} · ahora
               </p>
               <p className="mt-1 text-[12px] leading-snug">{push}</p>
             </div>

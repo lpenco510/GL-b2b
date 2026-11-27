@@ -7,6 +7,7 @@ import { coachTier, fmtRelative } from '@gravl/domain';
 import { cn } from '@gravl/ui';
 import { Avatar, Badge, Button, Card, CardHeader, EmptyState, Field, KpiTile, PageHeader, ProgressBar, Sparkline } from '@gravl/ui';
 import { Modal } from '@gravl/ui';
+import ConnectClient from '@/components/coach/ConnectClient';
 import type { CoachClient, FormCheck } from '@gravl/domain';
 import { AlertTriangle, Calendar, CheckCircle2, Dumbbell, Flame, GraduationCap, Layers, PlayCircle, Send, TrendingUp, Users, Video } from 'lucide-react';
 
@@ -50,6 +51,8 @@ export default function CoachPage() {
         <KpiTile label="Adherencia promedio" value={`${avgAdherence}%`} delta="+4 pts vs. mes anterior" hint="Sesiones hechas / planificadas" icon={TrendingUp} color="var(--color-gravl-emerald)" />
         <KpiTile label="Form checks" value={String(inbox.length)} delta={inbox.length ? 'pendientes de revisión' : 'al día'} deltaDirection="none" hint="Videos enviados por clientes" icon={Video} color="var(--color-gravl-amber)" />
       </div>
+
+      <ConnectClient />
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
         <Card className="p-5 sm:p-6 xl:col-span-5">

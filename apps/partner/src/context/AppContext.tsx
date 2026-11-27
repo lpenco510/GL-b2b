@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type {
   GymChallenge,
   GymMachine,
@@ -57,7 +57,22 @@ interface AppContextType {
   addChallenge: (c: GymChallenge) => void;
   connectedIntegrations: Set<string>;
   connectIntegration: (id: string) => void;
+
+  // ─── Marca del partner (Configuración) ─────────────
+  brandOverrides: Record<string, BrandOverride>;
+  setBrandOverride: (tenantId: string, patch: BrandOverride) => void;
+  resetBrand: (tenantId: string) => void;
 }
+
+export interface BrandOverride {
+  name?: string;
+  logoUrl?: string;
+  isoUrl?: string;
+  brandColor?: string;
+  welcome?: string;
+}
+
+const BRAND_KEY = 'gravl-brand-overrides';
 
 const AppContext = createContext<AppContextType | null>(null);
 
@@ -87,6 +102,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => new Set(integrationCards.filter((i) => i.status === 'connected').map((i) => i.id)),
   );
   const toastSeq = useRef(0);
+  const [brandOverrides, setBrandOverrides] = useState<Record<string, BrandOverride>>({});
+
+  // La marca personalizada se guarda en este navegador (en producción vive en el backend del partner).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(BRAND_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (raw) setBrandOverrides(JSON.parse(raw) as Record<string, BrandOverride>);
+    } catch {
+      /* almacenamiento no disponible: se usan los valores por defecto */
+    }
+  }, []);
+
+  const persistBrand = useCallback((next: Record<string, BrandOverride>) => {
+    try {
+      localStorage.setItem(BRAND_KEY, JSON.stringify(next));
+    } catch {
+      /* cuota llena o modo privado: queda solo en esta sesión */
+    }
+  }, []);
+
+  const setBrandOverride = useCallback(
+    (tenantId: string, patch: BrandOverride) =>
+      setBrandOverrides((prev) => {
+        const next = { ...prev, [tenantId]: { ...prev[tenantId], ...patch } };
+        persistBrand(next);
+        return next;
+      }),
+    [persistBrand],
+  );
+
+  const resetBrand = useCallback(
+    (tenantId: string) =>
+      setBrandOverrides((prev) => {
+        const next = { ...prev };
+        delete next[tenantId];
+        persistBrand(next);
+        return next;
+      }),
+    [persistBrand],
+  );
 
   const toggleSidebar = useCallback(() => setSidebarCollapsed((p) => !p), []);
 
@@ -146,12 +202,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       nudgedAt, markNudged,
       challenges, addChallenge,
       connectedIntegrations, connectIntegration,
+      brandOverrides, setBrandOverride, resetBrand,
     }),
     [
       tenantId, sidebarCollapsed, toggleSidebar, mobileNavOpen, mobilePreviewOpen, commandOpen,
       selectedLocationId, toasts, addToast, removeToast, getMachineStatus, setMachineStatus,
       nudgeRules, toggleNudgeRule, nudgedAt, markNudged, challenges, addChallenge,
-      connectedIntegrations, connectIntegration,
+      connectedIntegrations, connectIntegration, brandOverrides, setBrandOverride, resetBrand,
     ],
   );
 
