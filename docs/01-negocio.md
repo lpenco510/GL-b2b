@@ -111,9 +111,9 @@ Relevado de gravl.ai. No es lo que imaginamos: es lo que está publicado.
 | Entrenamientos adaptados **al equipamiento de cada gimnasio** ("Busca tu gimnasio") | Home | El inventario por sede es el corazón del producto B2B |
 | **"¿Máquina ocupada?" → cambiar ejercicio** | Home | Señal real de demanda insatisfecha por máquina (módulo Equipamiento) |
 | Strength Score, ranking entre amigos, feed, grupos | Home | Retos y ranking por sede (Comunidad) |
-| Página **Empresas** con "panel de partner", prueba gratis y propuesta a medida según socios y sedes | /es/enterprise | Este proyecto es la versión seria de ese panel. Cliente citado: MrFit MX |
+| Página **Empresas** que *promete* un "panel de partner", prueba gratis y propuesta a medida | /es/enterprise | **El panel no existe** (confirmado por el equipo): solo está la página de venta. Este proyecto es ese panel. Cliente citado: MrFit MX |
 | Programa de **Creadores** con página propia ("Entrena con Vicky") y pago por video | /es/creators | Base natural del segmento coach |
-| **API pública** con OAuth y scopes + MCP | /es/developers | Cómo conectamos sin tocar el core (ver `02-arquitectura.md`) |
+| **API pública** con OAuth y 7 scopes de lectura + MCP | /es/developers | Alcanza para coaches hoy; para cadenas hace falta el canal interno (ver `07-integracion-gravl.md`) |
 | Suscripción Pro mensual o anual vía App Store / Play Store, precios personalizados por usuario (Botsi) | Términos | Define cómo pensar el ticket (sección 11) |
 | Empresa: GAINS COACH PTY LTD, equipo chico y remoto, sitio en 8 idiomas | Términos / Empleo | Contexto para el plan de mercados |
 

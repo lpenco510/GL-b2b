@@ -4,12 +4,13 @@ import React, { type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { GravlIcon, GravlWordmark, ThemeToggle, cn } from '@gravl/ui';
-import { Briefcase, Globe2, LayoutGrid, ShieldAlert } from 'lucide-react';
+import { Briefcase, Cable, Globe2, LayoutGrid, ShieldAlert } from 'lucide-react';
 
 const nav = [
   { href: '/portfolio', label: 'Portafolio', icon: LayoutGrid },
   { href: '/deal-desk', label: 'Deal Desk', icon: Briefcase },
   { href: '/markets', label: 'Mercados', icon: Globe2 },
+  { href: '/integration', label: 'Integración GRAVL', icon: Cable },
 ];
 
 /**

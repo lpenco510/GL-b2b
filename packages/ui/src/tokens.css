@@ -163,11 +163,29 @@
     border: 1px solid var(--g-line); background: var(--g-raised); color: var(--g-fg-2);
   }
 
-  /* Fila de tabla clickeable: transición suave del fondo. */
-  .gravl-row { transition: background-color 0.18s ease; }
-  .gravl-row:hover { background: color-mix(in srgb, var(--g-fg) 3.5%, transparent); }
+  /* Fila de tabla: fondo suave + barra lima que entra desde la izquierda (como el foco de la app). */
+  .gravl-row { transition: background-color 0.2s ease, box-shadow 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .gravl-row:hover { background: color-mix(in srgb, var(--g-fg) 3%, transparent); box-shadow: inset 3px 0 0 0 #d2fe0b; }
+
+  /* Entrada de página: los bloques aparecen en cascada, una sola vez. */
+  .gravl-stagger > * { animation: gravl-slide-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+  .gravl-stagger > *:nth-child(2) { animation-delay: 0.05s; }
+  .gravl-stagger > *:nth-child(3) { animation-delay: 0.1s; }
+  .gravl-stagger > *:nth-child(4) { animation-delay: 0.15s; }
+  .gravl-stagger > *:nth-child(5) { animation-delay: 0.2s; }
+  .gravl-stagger > *:nth-child(n + 6) { animation-delay: 0.25s; }
+
+  /* Barras que crecen al aparecer y sparklines que se dibujan. */
+  .gravl-grow { transform-origin: left center; animation: gravl-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .gravl-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: gravl-draw 1.1s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards; }
+
+  /* Ícono o flecha que acompaña el hover del contenedor .group */
+  .gravl-nudge { transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .group:hover .gravl-nudge { transform: translateX(3px); }
 }
 
+@keyframes gravl-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes gravl-draw { to { stroke-dashoffset: 0; } }
 @keyframes gravl-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes gravl-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes gravl-slide-in-right { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }

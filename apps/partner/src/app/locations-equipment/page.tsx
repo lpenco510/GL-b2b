@@ -55,7 +55,7 @@ export default function EquipmentPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="gravl-stagger space-y-6">
       <PageHeader
         eyebrow={`Sede ${location.tier} · ${location.region}`}
         title={

@@ -14,7 +14,7 @@ const statusMeta: Record<MarketStatus, { label: string; tone: Tone }> = {
 /** Server component: datos estáticos de configuración, sin estado de cliente. */
 export default function MarketsPage() {
   return (
-    <div className="space-y-6">
+    <div className="gravl-stagger space-y-6">
       <PageHeader
         title="Mercados"
         description="Lo que cambia por país: moneda, cobro, factura fiscal, ley de datos y región de almacenamiento. Estados y cifras impositivas son supuestos a validar con legal y finanzas."

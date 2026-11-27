@@ -493,13 +493,12 @@ export const leaderboard = [
 
 // ─── Integraciones ───────────────────────────────────────────────
 export const integrationCards: IntegrationCard[] = [
-  { id: 'int_evo', provider: 'EVO', name: 'EVO / W12', monogram: 'EV', category: 'ERP', status: 'connected', description: 'Sync completo del ciclo de vida del socio' },
-  { id: 'int_mindbody', provider: 'MINDBODY', name: 'Mindbody', monogram: 'MB', category: 'ERP', status: 'available', description: 'ERP de gimnasio y reservas' },
-  { id: 'int_glofox', provider: 'GLOFOX', name: 'ABC Glofox', monogram: 'GX', category: 'ERP', status: 'available', description: 'Gestión de socios y cobros' },
-  { id: 'int_wellhub', provider: 'WELLHUB', name: 'Wellhub (Gympass)', monogram: 'WH', category: 'Agregador', status: 'available', description: 'Plataforma de beneficio corporativo' },
+  { id: 'int_carnet', provider: 'NONE', name: 'SportClub Carnet', monogram: 'SC', category: 'ERP', status: 'available', description: 'Vincular la cuenta GRAVL desde el carnet digital del socio' },
+  { id: 'int_erp', provider: 'NONE', name: 'ERP / sistema de cobros', monogram: 'ERP', category: 'ERP', status: 'available', description: 'Altas, bajas, plan y débitos rechazados (a definir con SportClub)' },
+  { id: 'int_wellhub', provider: 'WELLHUB', name: 'Wellhub (Gympass)', monogram: 'WH', category: 'Agregador', status: 'available', description: 'Socios que entran por beneficio corporativo' },
   { id: 'int_totalpass', provider: 'TOTALPASS', name: 'TotalPass', monogram: 'TP', category: 'Agregador', status: 'available', description: 'Red de acceso multi-gimnasio' },
-  { id: 'int_slack', provider: 'SLACK', name: 'Slack', monogram: 'SL', category: 'Comunicación', status: 'available', description: 'Alertas de churn y PRs al equipo' },
-  { id: 'int_teams', provider: 'TEAMS', name: 'Microsoft Teams', monogram: 'MT', category: 'Comunicación', status: 'available', description: 'Integración Corporate Wellness' },
+  { id: 'int_slack', provider: 'SLACK', name: 'Slack', monogram: 'SL', category: 'Comunicación', status: 'available', description: 'Alertas de bajas y PRs al equipo de cada sede' },
+  { id: 'int_whatsapp', provider: 'NONE', name: 'WhatsApp Business', monogram: 'WA', category: 'Comunicación', status: 'available', description: 'Lista de llamados del día para recepción' },
 ];
 
 export const qrFunnel = [
@@ -511,10 +510,10 @@ export const qrFunnel = [
 
 // ─── Alertas operativas (centro de notificaciones) ───────────────
 export const opsAlerts: OpsAlert[] = [
-  { id: 'al1', severity: 'critical', title: 'Squat Rack al 94% en Palermo', detail: 'Esperas de 8+ min entre 18 y 20 h. Evaluar 5º rack.', timestamp: isoMinAgo(14), href: '/locations-equipment' },
-  { id: 'al2', severity: 'warning', title: '23 socios cruzaron 14 días sin entrenar', detail: 'Pasaron de "Necesita nudge" a "En riesgo" esta semana.', timestamp: isoMinAgo(52), href: '/retention?segment=AT_RISK' },
-  { id: 'al3', severity: 'success', title: 'Salvavidas de racha recuperó 11 socios', detail: 'Volvieron a entrenar dentro de las 72 h del push.', timestamp: isoMinAgo(60 * 3), href: '/retention' },
-  { id: 'al4', severity: 'info', title: 'Extensión de Cuádriceps en mantenimiento', detail: 'Rutinas de Palermo recalculadas con Hack Squat y Prensa.', timestamp: isoMinAgo(60 * 6), href: '/locations-equipment' },
+  { id: 'al1', severity: 'critical', title: '14 socios entraron a "dar de baja" hoy', detail: 'Plus y Total: la política del acuerdo los deriva a la sede con una oferta.', timestamp: isoMinAgo(14), href: '/retention?segment=CANCEL_INTENT' },
+  { id: 'al2', severity: 'warning', title: 'Cable Crossover en Palermo: 194 veces "ocupada"', detail: 'Socios que tocaron "cambiar ejercicio" en 30 días. 12% de las veces que la buscaron.', timestamp: isoMinAgo(52), href: '/locations-equipment' },
+  { id: 'al3', severity: 'success', title: '31 socios Flex volvieron a entrenar', detail: 'Dentro de las 72 h del push de reactivación.', timestamp: isoMinAgo(60 * 3), href: '/retention' },
+  { id: 'al4', severity: 'info', title: 'Extensión de Cuádriceps fuera de servicio en Palermo', detail: 'La app ya la reemplaza en las rutinas por Hack Squat y Prensa.', timestamp: isoMinAgo(60 * 6), href: '/locations-equipment' },
 ];
 
 // ─── Corporate Wellness ──────────────────────────────────────────

@@ -37,7 +37,7 @@ export default function CoachPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="gravl-stagger space-y-6">
       <PageHeader
         title="Coach Studio"
         badge={<Badge tone="ink">Tramo {coachTier(24).label} · hasta {coachTier(24).upTo} clientes</Badge>}

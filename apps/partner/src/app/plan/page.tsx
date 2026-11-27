@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { integrationCards, locations, organization, qrFunnel, retentionCohorts } from '@gravl/mock-data';
+import { integrationCards, locations, membersInScope, organization, qrFunnel, retentionCohorts } from '@gravl/mock-data';
 import { fmtInt, fmtPct, fmtUsd } from '@gravl/domain';
 import { cn } from '@gravl/ui';
 import { Badge, Button, Card, CardHeader, Field, PageHeader, ProgressBar } from '@gravl/ui';
@@ -10,7 +10,7 @@ import { Modal } from '@gravl/ui';
 import QrCode, { buildPosterSvg } from '@/components/plan/QrCode';
 import DealCard from '@/components/plan/DealCard';
 import type { IntegrationCard } from '@gravl/domain';
-import { Calculator, Check, Copy, CreditCard, Download, Link2, Loader2, Plug, QrCode as QrIcon, ShieldCheck, TrendingUp } from 'lucide-react';
+import { Calculator, Check, Copy, CreditCard, Download, Link2, Loader2, Plug, QrCode as QrIcon, ShieldCheck } from 'lucide-react';
 
 function download(filename: string, content: string, type: string) {
   const url = URL.createObjectURL(new Blob([content], { type }));
@@ -214,13 +214,18 @@ function IntegrationModal({ integration, onClose }: { integration: IntegrationCa
 export default function PlanPage() {
   const { addToast, connectedIntegrations } = useApp();
   const [connecting, setConnecting] = useState<IntegrationCard | null>(null);
-  const seatPct = (organization.activeSeats / organization.seatLimit) * 100;
-  // Crecimiento neto de asientos de las últimas 4 semanas (telemetría de provisioning).
-  const weeklySeatGrowth = 22;
-  const weeksToFull = Math.ceil((organization.seatLimit - organization.activeSeats) / weeklySeatGrowth);
+  // Activación por sede: vinculados ÷ socios del ERP (estimado por capacidad en la demo).
+  const totalCap = locations.reduce((acc, l) => acc + l.floorCapacity, 0);
+  const activation = locations
+    .map((l) => ({
+      id: l.id,
+      name: l.shortName,
+      pct: (membersInScope(l.id).length / ((organization.totalGymMembers * l.floorCapacity) / totalCap)) * 100,
+    }))
+    .sort((x, y) => x.pct - y.pct);
 
   return (
-    <div className="space-y-6">
+    <div className="gravl-stagger space-y-6">
       <PageHeader
         title="Acuerdo, Activación & ROI"
         description="Lo que acordamos, cómo activar socios y el retorno que te está dando GRAVL."
@@ -300,48 +305,32 @@ export default function PlanPage() {
       </Card>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
-        {/* Asientos & billing */}
+        {/* Activación por sede */}
         <Card className="flex flex-col p-5 sm:p-6 xl:col-span-5">
           <CardHeader
             icon={CreditCard}
-            title="Asientos & facturación"
-            subtitle={`Plan ${organization.planTier === 'GROWTH' ? 'Growth' : organization.planTier} · cobro directo por Stripe, sin comisión de App Store.`}
+            title="Activación por sede"
+            subtitle="Socios que vincularon su cuenta GRAVL sobre el total de la sede según el ERP. Se paga solo por los activos."
           />
-          <div className="mt-6">
-            <div className="flex items-end justify-between">
-              <p className="gravl-num text-[40px] text-gravl-text">
-                {fmtInt(organization.activeSeats)}
-                <span className="text-base font-semibold text-gravl-text-muted"> / {fmtInt(organization.seatLimit)}</span>
-              </p>
-              <Badge tone={seatPct >= 80 ? 'amber' : 'emerald'}>{fmtPct(seatPct)} usado</Badge>
-            </div>
-            <ProgressBar value={organization.activeSeats} max={organization.seatLimit} className="mt-3 h-2.5" color="linear-gradient(90deg,var(--color-gravl-volt),var(--color-gravl-cyan))" label="Asientos usados" />
-            <p className="mt-2 text-xs text-gravl-text-muted">{fmtInt(organization.seatLimit - organization.activeSeats)} asientos libres · +{weeklySeatGrowth} por semana</p>
+          <div className="mt-5 flex items-end justify-between">
+            <p className="gravl-num text-[48px] text-gravl-text">
+              {fmtPct((organization.activeSeats / organization.totalGymMembers) * 100)}
+            </p>
+            <p className="text-right text-xs text-gravl-text-muted">
+              {fmtInt(organization.activeSeats)} de {fmtInt(organization.totalGymMembers)} socios
+              <br />Meta del piloto: 25% al día 90
+            </p>
           </div>
-
-          {seatPct >= 80 && (
-            <div className="mt-5 flex items-start gap-3 rounded-xl border border-gravl-amber/25 bg-gravl-amber/[0.06] p-3.5">
-              <TrendingUp size={16} className="mt-0.5 shrink-0 text-gravl-amber" aria-hidden />
-              <div className="text-xs">
-                <p className="font-semibold text-gravl-text">Al ritmo actual llenás el plan en ~{weeksToFull} semanas</p>
-                <p className="mt-0.5 text-gravl-text-secondary">Enterprise suma asientos ilimitados, SSO y API de datos. Evitá que nuevos socios queden sin acceso.</p>
-                <button onClick={() => addToast('Tu Customer Success Manager te contacta hoy para el upgrade.', 'info')} className="mt-2 font-bold text-gravl-amber hover:underline">
-                  Hablar sobre Enterprise →
-                </button>
-              </div>
-            </div>
-          )}
-
-          <dl className="mt-auto grid grid-cols-2 gap-3 pt-6 text-xs">
-            <div className="rounded-xl bg-gravl-text/[0.03] p-3">
-              <dt className="text-gravl-text-muted">MRR</dt>
-              <dd className="tabular-nums mt-1 text-base font-bold text-gravl-text">{fmtUsd(organization.mrrUsd)}</dd>
-            </div>
-            <div className="rounded-xl bg-gravl-text/[0.03] p-3">
-              <dt className="text-gravl-text-muted">Próxima factura</dt>
-              <dd className="mt-1 text-base font-bold text-gravl-text">1 dic.</dd>
-            </div>
-          </dl>
+          <ul className="mt-5 space-y-2.5">
+            {activation.map((a) => (
+              <li key={a.id} className="group grid grid-cols-[96px_1fr_44px] items-center gap-3 text-[13px]">
+                <span className="truncate font-medium text-gravl-text">{a.name}</span>
+                <ProgressBar value={a.pct} max={40} color={a.pct >= 25 ? 'var(--color-gravl-text)' : 'var(--color-gravl-amber)'} label={`Activación ${a.name}`} />
+                <span className="tabular-nums text-right text-gravl-text-secondary">{Math.round(a.pct)}%</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-auto pt-5 text-xs text-gravl-text-muted">Las sedes debajo de la meta reciben kit QR para recepción y espejos.</p>
         </Card>
 
         {/* Integraciones */}

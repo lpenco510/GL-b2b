@@ -10,6 +10,7 @@ packages/
   domain/      Reglas de negocio puras + tests
   ui/          Design system (tokens + componentes)
   mock-data/   Datos de demo (se reemplaza por la API)
+  gravl-api/   Cliente tipado de api.gravl.ai + mapeo a la telemetría B2B (con tests)
 db/           Esquema PostgreSQL propuesto para el Partner API (con aislamiento por partner)
 docs/          Quién es quién, lógica de negocio, arquitectura, mercados, identidad, roadmap, design system
 ```
@@ -23,6 +24,9 @@ docs/          Quién es quién, lógica de negocio, arquitectura, mercados, ide
 4. [`docs/04-identidad-y-datos.md`](docs/04-identidad-y-datos.md): la cuenta es del socio; cómo se vincula con la app actual.
 5. [`docs/05-roadmap.md`](docs/05-roadmap.md): próximas versiones y **preguntas abiertas**.
 6. [`docs/06-design-system.md`](docs/06-design-system.md): reglas visuales de GRAVL.
+7. [`docs/07-integracion-gravl.md`](docs/07-integracion-gravl.md): qué se conecta hoy con la API de GRAVL y qué hay que pedir.
+
+**Para mandar al equipo de GRAVL:** [`docs/para-el-equipo-gravl.md`](docs/para-el-equipo-gravl.md) (corto, en criollo).
 
 ## Correr la demo en tu computadora
 

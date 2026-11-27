@@ -106,7 +106,7 @@ export default function CommunityPage() {
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
   return (
-    <div className="space-y-6">
+    <div className="gravl-stagger space-y-6">
       <Suspense fallback={null}>
         <UrlIntents onOpen={openWizard} />
       </Suspense>

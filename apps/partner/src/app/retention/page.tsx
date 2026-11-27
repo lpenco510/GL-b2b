@@ -143,7 +143,7 @@ export default function RetentionPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="gravl-stagger space-y-6">
       <Suspense fallback={null}>
         <UrlIntents onSegment={changeSegment} onMember={openMember} />
       </Suspense>

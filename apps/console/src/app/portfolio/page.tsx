@@ -32,7 +32,7 @@ export default function PortfolioPage() {
   const usedMarkets = [...new Set(portfolio.map((p) => p.market))];
 
   return (
-    <div className="space-y-6">
+    <div className="gravl-stagger space-y-6">
       <PageHeader
         title="Portafolio de partners"
         description="Toda la cartera B2B en un lugar: salud de cada cuenta, activación y renovaciones. Esta vista nunca se expone a un partner. Cartera de ejemplo: partners y montos ficticios, salvo SportClub (prospecto) y MrFit MX (cliente citado en gravl.ai, sin datos)."

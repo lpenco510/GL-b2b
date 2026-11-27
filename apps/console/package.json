@@ -17,7 +17,8 @@
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "recharts": "^3.11.1"
+    "recharts": "^3.11.1",
+    "@gravl/gravl-api": "*"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",

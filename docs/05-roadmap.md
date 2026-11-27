@@ -38,9 +38,9 @@ La misma cuenta que hoy usa la app (ver `04-identidad-y-datos.md`):
 ## Preguntas abiertas para los founders
 
 1. **Ticket:** ingreso neto por suscriptor Pro (después de las tiendas), mix mensual/anual, costo por usuario activo (ver `01-negocio.md` §11).
-2. **API:** ¿se pueden sumar scopes B2B (`partner:activity`, `partner:messaging`) y webhooks a `api.gravl.ai`? Es la base técnica de todo el B2B.
+2. **API:** ¿se pueden sumar `gymId` en entrenamientos, el evento de "máquina ocupada", Strength Score, dos escrituras (push y asignar rutina) y webhooks? Lista completa en `07-integracion-gravl.md`.
 3. **Backend del core:** ¿en qué está hecho? Si es .NET, el Partner API va en .NET con el mismo equipo.
-4. **Panel de partner actual:** la web de Empresas ya promete uno. ¿Existe algo construido o es este?
+4. **Canal interno:** ¿se puede dar al B2B una réplica de lectura con vistas filtradas por consentimiento? Es lo que destraba el piloto con una cadena (ver `07-integracion-gravl.md`).
 5. **MrFit MX:** ¿qué aprendieron con ese cliente? Precio, activación, qué usan del panel.
 6. **Creadores → coaches:** ¿el programa de Creadores puede ser la puerta de entrada al segmento coach?
 7. **Socio que deja el gimnasio:** ¿le ofrecemos seguir con GRAVL directo? Es la ventaja de datos (§10), pero hay que acordarlo en el contrato.

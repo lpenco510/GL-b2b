@@ -15,7 +15,7 @@ En gravl.ai/developers GRAVL ya publica una **API REST** (`api.gravl.ai/api/v1`)
 
 Esto define la arquitectura B2B: **el portal del partner es, técnicamente, una app OAuth más.** No tocamos la base del core de GRAVL. Cuando un socio vincula su cuenta con SportClub, concede scopes. El Partner API lee con esos tokens y guarda solo lo que es del negocio B2B.
 
-Lo que hay que pedirle al equipo de GRAVL:
+Lo que hay que pedirle al equipo de GRAVL (detalle y alternativas de conexión directa a la base en `07-integracion-gravl.md`):
 
 1. **Scopes B2B nuevos**, por ejemplo `partner:activity` y `partner:messaging`. Que el socio los conceda al vincularse con su gimnasio.
 2. **Lectura por lote:** un token "de partner" que lea los socios vinculados, siempre limitado a quienes concedieron el scope.

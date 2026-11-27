@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useId } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { cn, tint } from './cn';
 import { initials as toInitials } from '@gravl/domain';
 import { ArrowDownRight, ArrowUpRight, type LucideIcon } from 'lucide-react';
@@ -112,9 +112,9 @@ export function Badge({ tone = 'neutral', icon: Icon, className, children }: { t
 // ─── Button ──────────────────────────────────────────────────────
 const btnVariants = {
   /** Lima con texto en tinta: la acción principal de la pantalla. Una por vista. */
-  primary: 'bg-gravl-lime text-gravl-ink hover:bg-[#c3ee00] shadow-[inset_0_-2px_0_rgba(8,14,24,0.12)]',
+  primary: 'bg-gravl-lime text-gravl-ink hover:bg-[#c3ee00] hover:-translate-y-px hover:shadow-[0_6px_16px_-6px_rgba(150,190,0,0.6)] shadow-[inset_0_-2px_0_rgba(8,14,24,0.12)]',
   /** Tinta sólida: acciones fuertes secundarias. */
-  ink: 'bg-gravl-ink text-white hover:bg-[#1a2230] dark:bg-gravl-text dark:text-gravl-ink dark:hover:bg-white',
+  ink: 'bg-gravl-ink text-white hover:bg-[#1a2230] hover:-translate-y-px hover:shadow-[0_6px_16px_-8px_rgba(8,14,24,0.5)] dark:bg-gravl-text dark:text-gravl-ink dark:hover:bg-white',
   secondary: 'bg-gravl-card text-gravl-text border border-gravl-line hover:border-gravl-text/25',
   ghost: 'text-gravl-text-secondary hover:text-gravl-text hover:bg-gravl-text/[0.05]',
   soft: 'bg-gravl-text/[0.06] text-gravl-text hover:bg-gravl-text/[0.1]',
@@ -136,7 +136,7 @@ export const Button = React.forwardRef<
       ref={ref}
       type={type}
       className={cn(
-        'inline-flex shrink-0 items-center font-semibold transition-[background-color,border-color,color,transform] duration-200 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40',
+        'group inline-flex shrink-0 items-center font-semibold transition-[background-color,border-color,color,transform,box-shadow] duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] active:translate-y-0 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40',
         btnVariants[variant],
         btnSizes[size],
         className,
@@ -243,7 +243,7 @@ export function ProgressBar({ value, max = 100, color, className, label }: { val
   return (
     <div role="progressbar" aria-valuenow={Math.round(value)} aria-valuemin={0} aria-valuemax={max} aria-label={label} className={cn('h-1.5 w-full overflow-hidden rounded-full bg-gravl-text/[0.08]', className)}>
       <div
-        className="h-full rounded-full transition-[width] duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+        className="gravl-grow h-full rounded-full transition-[width] duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
         style={{ width: `${pct}%`, background: color ?? 'var(--color-gravl-text)' }}
       />
     </div>
@@ -269,10 +269,48 @@ export function Sparkline({ points, color = 'var(--color-gravl-text)', width = 1
         </linearGradient>
       </defs>
       <path d={`${line} L${width} ${height} L0 ${height} Z`} fill={`url(#${gradId})`} />
-      <path d={line} fill="none" style={{ stroke: color }} strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
+      <path d={line} pathLength={1} className="gravl-draw" fill="none" style={{ stroke: color }} strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" />
       <circle cx={lx} cy={ly} r={2.75} style={{ fill: color }} />
     </svg>
   );
+}
+
+// ─── Número animado ──────────────────────────────────────────────
+const intFmt = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
+
+/**
+ * Cuenta hasta el valor nuevo cuando cambia (ej. al elegir otra sede).
+ * El primer render muestra el valor final: sin saltos ni errores de hidratación.
+ */
+export function AnimatedNumber({ value, format = (n: number) => intFmt.format(n), duration = 650 }: { value: number; format?: (n: number) => string; duration?: number }) {
+  const [shown, setShown] = useState(value);
+  const from = useRef(value);
+  useEffect(() => {
+    const start = from.current;
+    if (start === value) return;
+    const reduce = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      from.current = value;
+      setShown(value);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const v = start + (value - start) * eased;
+      setShown(v);
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else from.current = value;
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      from.current = value;
+    };
+  }, [value, duration]);
+  return <>{format(Math.round(shown))}</>;
 }
 
 // ─── KPI tile ────────────────────────────────────────────────────
@@ -313,7 +351,7 @@ export function KpiTile({
   return (
     <div
       className={cn(
-        'gravl-card flex flex-col justify-between p-5',
+        'gravl-card group flex flex-col justify-between p-5 hover:border-gravl-text/20',
         emphasis && '!border-transparent !bg-gravl-ink text-white dark:!border-white/10',
       )}
     >
@@ -324,7 +362,7 @@ export function KpiTile({
       <div className="mt-4 flex items-end justify-between gap-3">
         <div className="min-w-0">
           <p className={cn('gravl-num text-[52px]', emphasis ? 'text-gravl-lime' : 'text-gravl-text')}>
-            {value}
+            {typeof value === 'number' ? <AnimatedNumber value={value} /> : value}
             {unit && <span className={cn('ml-1 text-[22px]', emphasis ? 'text-white/50' : 'text-gravl-text-muted')}>{unit}</span>}
           </p>
           {delta && (

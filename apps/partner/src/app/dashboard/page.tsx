@@ -113,7 +113,7 @@ export default function DashboardPage() {
   const chartData = retentionCohorts.slice(0, 7).map((c) => ({ month: c.month, con: c.withGravl, sin: Math.round((c.withGravl + c.withoutGravl * 2) / 3) }));
 
   return (
-    <div className="space-y-6">
+    <div className="gravl-stagger space-y-6">
       <PageHeader
         eyebrow={`${tenant.name} · ${scopeName}`}
         title={
@@ -154,7 +154,7 @@ export default function DashboardPage() {
         />
         <KpiTile
           label="Socios con GRAVL"
-          value={fmtInt(stats.total)}
+          value={stats.total}
           delta={`${fmtPct((stats.total / organization.totalGymMembers) * 100)} de los socios del piloto`}
           deltaDirection="none"
           icon={Users}
@@ -163,7 +163,7 @@ export default function DashboardPage() {
         />
         <KpiTile
           label="Cuotas en riesgo · 12 meses"
-          value={fmtInt(stats.feesAtRisk)}
+          value={stats.feesAtRisk}
           delta={`${fmtInt(stats.cancelIntent)} socios con intención de baja`}
           deltaDirection="down"
           deltaGood={false}

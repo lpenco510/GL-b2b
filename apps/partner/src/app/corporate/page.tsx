@@ -18,7 +18,7 @@ export default function CorporatePage() {
   const worst = [...visible].sort((a, b) => b.burnoutRisk - a.burnoutRisk)[0];
 
   return (
-    <div className="space-y-6">
+    <div className="gravl-stagger space-y-6">
       <PageHeader
         title="Corporate Wellness"
         badge={<Badge tone="cyan">Nimbus Tech LATAM</Badge>}

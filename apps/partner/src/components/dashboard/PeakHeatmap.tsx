@@ -75,7 +75,7 @@ export default function PeakHeatmap() {
                         onMouseLeave={() => setHover(null)}
                         title={`${DAY_LABELS[d]} ${row.hour} h: ${value} entrenamientos iniciados`}
                         className={cn(
-                          'tabular-nums flex h-7 items-center justify-center rounded-md text-[10px] font-bold transition-transform hover:scale-105',
+                          'tabular-nums flex h-7 cursor-default items-center justify-center rounded-md text-[10px] font-bold transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:z-10 hover:scale-[1.12] hover:shadow-[0_4px_12px_-4px_rgba(8,14,24,0.35)]',
                           isNow && 'ring-2 ring-gravl-text ring-offset-1 ring-offset-gravl-card',
                         )}
                         style={{ background: s.bg, color: s.fg }}

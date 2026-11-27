@@ -88,7 +88,7 @@ export default function DealDeskPage() {
   const approvalTone = calc.approval.level === 'AUTO' ? 'emerald' : calc.approval.level === 'HEAD_OF_SALES' ? 'amber' : 'crimson';
 
   return (
-    <div className="space-y-6">
+    <div className="gravl-stagger space-y-6">
       <Suspense fallback={null}><Intents onLoad={onLoad} /></Suspense>
       <PageHeader
         title="Deal Desk"
