@@ -4,12 +4,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { cn } from '@gravl/ui';
-import { demoTenants, formCheckInbox, locations } from '@gravl/mock-data';
-import { monetizationLabel } from '@gravl/domain';
-import { membersInScope, scopeStats } from '@gravl/mock-data';
+import { demoTenants, formCheckInbox, locations, membersInScope, scopeStats } from '@gravl/mock-data';
+import { nudgeDecisionFor } from '@gravl/domain';
+import { GravlIcon, GravlWordmark, cn } from '@gravl/ui';
 import { navByVertical, verticalMeta } from './nav';
-import { useSwitchTenant, useTenant, useVertical } from './useTenant';
+import { useSwitchTenant, useTenant } from './useTenant';
 import { Check, ChevronLeft, ChevronRight, ChevronsUpDown, Smartphone, X } from 'lucide-react';
 
 function TenantSwitcher({ collapsed }: { collapsed: boolean }) {
@@ -17,13 +16,10 @@ function TenantSwitcher({ collapsed }: { collapsed: boolean }) {
   const switchTenant = useSwitchTenant();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const meta = { color: tenant.accent };
 
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
-    };
+    const onDown = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
@@ -39,23 +35,20 @@ function TenantSwitcher({ collapsed }: { collapsed: boolean }) {
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`Workspace actual: ${tenant.name}. Cambiar workspace`}
+        aria-label={`Partner actual: ${tenant.name}. Cambiar`}
         className={cn(
-          'flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-white/[0.04]',
-          collapsed && 'justify-center',
+          'flex w-full items-center gap-3 rounded-xl border border-gravl-line bg-gravl-card p-2 text-left transition-[border-color,box-shadow] duration-200 hover:border-gravl-text/25 hover:shadow-[0_4px_14px_-6px_rgba(8,14,24,0.18)]',
+          collapsed && 'justify-center border-transparent bg-transparent p-1',
         )}
       >
-        <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-black text-gravl-canvas"
-          style={{ background: meta.color, boxShadow: `0 0 18px ${meta.color}55` }}
-        >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-gravl-ink text-[12px] font-bold tracking-tight text-white dark:bg-gravl-text dark:text-gravl-ink">
           {tenant.shortName}
         </span>
         {!collapsed && (
           <>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-bold text-white">{tenant.name}</span>
-              <span className="block truncate text-[11px] text-gravl-text-muted">{tenant.subtitle}</span>
+              <span className="block truncate text-[14px] font-semibold text-gravl-text">{tenant.name}</span>
+              <span className="block truncate text-xs text-gravl-text-muted">{tenant.subtitle}</span>
             </span>
             <ChevronsUpDown size={14} className="shrink-0 text-gravl-text-muted" aria-hidden />
           </>
@@ -64,12 +57,9 @@ function TenantSwitcher({ collapsed }: { collapsed: boolean }) {
 
       {open && (
         <div role="menu" className="gravl-glass absolute left-0 top-full z-50 mt-2 w-64 animate-slide-up p-1.5">
-          <p className="px-2.5 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">
-            Workspaces de demo
-          </p>
+          <p className="gravl-label px-2.5 pb-1.5 pt-1">Partners de demo</p>
           {demoTenants.map((t) => {
             const m = verticalMeta[t.vertical];
-            const Icon = m.icon;
             const active = t.id === tenant.id;
             return (
               <button
@@ -80,19 +70,14 @@ function TenantSwitcher({ collapsed }: { collapsed: boolean }) {
                   setOpen(false);
                   if (!active) switchTenant(t);
                 }}
-                className={cn(
-                  'flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors',
-                  active ? 'bg-white/[0.06]' : 'hover:bg-white/[0.04]',
-                )}
+                className={cn('flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors duration-150', active ? 'bg-gravl-text/[0.06]' : 'hover:bg-gravl-text/[0.04]')}
               >
-                <Icon size={16} style={{ color: t.accent }} aria-hidden />
+                <m.icon size={16} className="text-gravl-text-muted" aria-hidden />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-xs font-semibold text-white">{t.name}</span>
-                  <span className="block truncate text-[10px] text-gravl-text-muted">
-                    {m.label} · {monetizationLabel[t.deal.monetization]}
-                  </span>
+                  <span className="block truncate text-[13px] font-semibold text-gravl-text">{t.name}</span>
+                  <span className="block truncate text-[11px] text-gravl-text-muted">{m.label}</span>
                 </span>
-                {active && <Check size={14} className="text-gravl-volt" aria-hidden />}
+                {active && <Check size={14} className="text-gravl-text" aria-hidden />}
               </button>
             );
           })}
@@ -105,42 +90,42 @@ function TenantSwitcher({ collapsed }: { collapsed: boolean }) {
 function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const { selectedLocationId, getMachineStatus, nudgedAt, mobilePreviewOpen, setMobilePreviewOpen } = useApp();
   const pathname = usePathname();
-  const vertical = useVertical();
   const tenant = useTenant();
 
   const badges = useMemo(() => {
-    const stats = scopeStats(selectedLocationId);
-    const maintenance = locations
-      .flatMap((l) => l.equipmentProfile.machines)
-      .filter((m) => getMachineStatus(m) === 'MAINTENANCE').length;
+    const stats = scopeStats(selectedLocationId, tenant.deal);
+    const actionable = membersInScope(selectedLocationId).filter(
+      (m) => (m.cancelIntent || m.status === 'AT_RISK') && nudgeDecisionFor(m, tenant.deal, { lastNudgedAt: nudgedAt[m.userId] }).allowed,
+    ).length;
+    const maintenance = locations.flatMap((l) => l.equipmentProfile.machines).filter((m) => getMachineStatus(m) === 'MAINTENANCE').length;
     return {
-      live: { text: String(stats.liveNow), tone: 'live' as const },
-      atRisk: {
-        // En débito automático lo urgente es la intención de baja, no la inactividad.
-        text: String(
-          membersInScope(selectedLocationId).filter((m) =>
-            (tenant.deal.monetization === 'BREAKAGE' ? !!m.cancelIntent : m.status === 'AT_RISK') && !nudgedAt[m.userId],
-          ).length,
-        ),
-        tone: 'crimson' as const,
-      },
-      maintenance: maintenance ? { text: String(maintenance), tone: 'amber' as const } : undefined,
-      formChecks: { text: String(formCheckInbox.length), tone: 'amber' as const },
-    };
+      live: { text: String(stats.liveNow), live: true },
+      atRisk: { text: String(actionable) },
+      maintenance: maintenance ? { text: String(maintenance) } : undefined,
+      formChecks: { text: String(formCheckInbox.length) },
+    } as Record<string, { text: string; live?: boolean } | undefined>;
   }, [selectedLocationId, getMachineStatus, nudgedAt, tenant]);
 
   return (
     <>
-      <div className="border-b border-white/[0.07] px-3 py-3">
+      <div className={cn('flex h-16 items-center gap-3 px-4', collapsed && 'justify-center px-0')}>
+        <GravlIcon size={28} />
+        {!collapsed && (
+          <span className="flex items-baseline gap-2 text-gravl-text">
+            <GravlWordmark height={13} />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-gravl-text-muted">Partners</span>
+          </span>
+        )}
+      </div>
+
+      <div className="px-3 pb-2">
         <TenantSwitcher collapsed={collapsed} />
       </div>
 
-      <nav aria-label="Módulos" className="flex-1 space-y-5 overflow-y-auto px-3 py-5">
-        {navByVertical[vertical].map((group) => (
-          <div key={group.label} className="space-y-1">
-            {!collapsed && (
-              <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">{group.label}</p>
-            )}
+      <nav aria-label="Módulos" className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
+        {navByVertical[tenant.vertical].map((group) => (
+          <div key={group.label} className="space-y-0.5">
+            {!collapsed && <p className="gravl-label px-3 pb-1.5">{group.label}</p>}
             {group.items.map((item) => {
               const active = pathname === item.href || pathname?.startsWith(item.href + '/');
               const Icon = item.icon;
@@ -153,41 +138,25 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
                   aria-current={active ? 'page' : undefined}
                   title={collapsed ? item.label : undefined}
                   className={cn(
-                    'group relative flex items-center gap-3 rounded-xl border px-3 py-2.5 text-[13px] transition-colors',
+                    'group relative flex h-10 items-center gap-3 rounded-xl px-3 text-[14px] transition-[background-color,color] duration-200',
                     collapsed && 'justify-center px-0',
                     active
-                      ? 'border-gravl-volt/25 bg-gradient-to-r from-gravl-volt/[0.14] to-gravl-volt/[0.03] font-semibold text-white'
-                      : 'border-transparent font-medium text-gravl-text-secondary hover:bg-white/[0.04] hover:text-white',
+                      ? 'bg-gravl-ink font-semibold text-white dark:bg-gravl-lime dark:text-gravl-ink'
+                      : 'font-medium text-gravl-text-secondary hover:bg-gravl-text/[0.05] hover:text-gravl-text',
                   )}
                 >
-                  {active && (
-                    <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-gravl-volt shadow-[0_0_10px_#C6FF00]" />
-                  )}
-                  <Icon
-                    size={18}
-                    aria-hidden
-                    className={cn('shrink-0', active ? 'text-gravl-volt' : 'text-gravl-text-muted group-hover:text-white')}
-                  />
+                  <Icon size={18} aria-hidden className={cn('shrink-0 transition-transform duration-200 group-hover:scale-110', active ? '' : 'text-gravl-text-muted group-hover:text-gravl-text')} />
                   {!collapsed && <span className="min-w-0 flex-1 truncate">{item.label}</span>}
                   {!collapsed && badge && (
                     <span
                       className={cn(
-                        'tabular-nums rounded-full px-1.5 py-0.5 text-[10px] font-bold',
-                        badge.tone === 'live' && 'bg-gravl-emerald/15 text-gravl-emerald',
-                        badge.tone === 'crimson' && 'bg-gravl-crimson/15 text-rose-300',
-                        badge.tone === 'amber' && 'bg-gravl-amber/15 text-gravl-amber',
+                        'tabular-nums flex items-center gap-1 rounded-md px-1.5 text-[11px] font-semibold',
+                        active ? 'bg-white/15 text-white dark:bg-gravl-ink/15 dark:text-gravl-ink' : 'bg-gravl-text/[0.07] text-gravl-text-secondary',
                       )}
                     >
+                      {badge.live && <span className="h-1.5 w-1.5 rounded-full bg-gravl-emerald" />}
                       {badge.text}
                     </span>
-                  )}
-                  {collapsed && badge && (
-                    <span
-                      className={cn(
-                        'absolute right-2 top-2 h-1.5 w-1.5 rounded-full',
-                        badge.tone === 'live' ? 'bg-gravl-emerald' : badge.tone === 'crimson' ? 'bg-gravl-crimson' : 'bg-gravl-amber',
-                      )}
-                    />
                   )}
                 </Link>
               );
@@ -196,21 +165,19 @@ function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavig
         ))}
       </nav>
 
-      <div className="space-y-1.5 border-t border-white/[0.07] p-3">
+      <div className="border-t border-gravl-line p-3">
         <button
           onClick={() => setMobilePreviewOpen(!mobilePreviewOpen)}
           aria-pressed={mobilePreviewOpen}
-          title={collapsed ? 'Preview de la app del socio' : undefined}
+          title={collapsed ? 'Ver la app del socio' : undefined}
           className={cn(
-            'flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-xs font-semibold transition-colors',
+            'flex h-10 w-full items-center gap-3 rounded-xl px-3 text-[14px] font-medium transition-colors duration-200',
             collapsed && 'justify-center px-0',
-            mobilePreviewOpen
-              ? 'border-gravl-cyan/30 bg-gravl-cyan/12 text-gravl-cyan'
-              : 'border-white/[0.06] text-gravl-text-secondary hover:bg-white/[0.04] hover:text-white',
+            mobilePreviewOpen ? 'bg-gravl-text/[0.07] text-gravl-text' : 'text-gravl-text-secondary hover:bg-gravl-text/[0.05] hover:text-gravl-text',
           )}
         >
-          <Smartphone size={17} aria-hidden />
-          {!collapsed && <span className="flex-1 text-left">Preview app del socio</span>}
+          <Smartphone size={18} aria-hidden />
+          {!collapsed && <span className="flex-1 text-left">Ver la app del socio</span>}
         </button>
       </div>
     </>
@@ -222,11 +189,10 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Desktop */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 hidden h-screen select-none flex-col border-r border-white/[0.08] bg-gradient-to-b from-[#0E1219]/95 to-[#090C11]/98 backdrop-blur-xl transition-[width] duration-300 lg:flex',
-          sidebarCollapsed ? 'w-[76px]' : 'w-[260px]',
+          'fixed left-0 top-0 z-40 hidden h-screen select-none flex-col border-r border-gravl-line bg-gravl-surface transition-[width] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] lg:flex',
+          sidebarCollapsed ? 'w-[76px]' : 'w-[264px]',
         )}
       >
         <SidebarContent collapsed={sidebarCollapsed} />
@@ -235,25 +201,24 @@ export default function Sidebar() {
             onClick={toggleSidebar}
             aria-label={sidebarCollapsed ? 'Expandir menú' : 'Colapsar menú'}
             className={cn(
-              'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-gravl-text-muted transition-colors hover:bg-white/[0.04] hover:text-white',
+              'flex h-9 w-full items-center gap-3 rounded-xl px-3 text-[13px] text-gravl-text-muted transition-colors hover:bg-gravl-text/[0.05] hover:text-gravl-text',
               sidebarCollapsed && 'justify-center px-0',
             )}
           >
-            {sidebarCollapsed ? <ChevronRight size={17} /> : <ChevronLeft size={17} />}
-            {!sidebarCollapsed && <span>Colapsar menú</span>}
+            {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            {!sidebarCollapsed && <span>Colapsar</span>}
           </button>
         </div>
       </aside>
 
-      {/* Mobile drawer */}
       {mobileNavOpen && (
         <div className="fixed inset-0 z-[80] lg:hidden">
-          <div className="absolute inset-0 animate-fade-in bg-black/60" onClick={() => setMobileNavOpen(false)} aria-hidden />
-          <aside className="absolute left-0 top-0 flex h-full w-[280px] max-w-[85vw] animate-slide-in-left flex-col border-r border-white/[0.08] bg-[#0B0E14]">
+          <div className="absolute inset-0 animate-fade-in bg-gravl-ink/40 backdrop-blur-[2px]" onClick={() => setMobileNavOpen(false)} aria-hidden />
+          <aside className="absolute left-0 top-0 flex h-full w-[284px] max-w-[85vw] animate-slide-in-left flex-col border-r border-gravl-line bg-gravl-surface">
             <button
               onClick={() => setMobileNavOpen(false)}
               aria-label="Cerrar menú"
-              className="absolute right-3 top-4 z-10 rounded-lg p-1.5 text-gravl-text-muted hover:bg-white/[0.06] hover:text-white"
+              className="absolute right-3 top-4 z-10 rounded-lg p-1.5 text-gravl-text-muted hover:bg-gravl-text/[0.06] hover:text-gravl-text"
             >
               <X size={16} />
             </button>

@@ -36,8 +36,8 @@ export const navByVertical: Record<VerticalType, NavGroup[]> = {
       label: 'Operación',
       items: [
         { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard, badgeKey: 'live', keywords: 'inicio dashboard kpi' },
-        { href: '/retention', label: 'Retención & Nudges', icon: Flame, badgeKey: 'atRisk', keywords: 'churn socios riesgo push' },
-        { href: '/locations-equipment', label: 'Equipamiento & Planta', icon: Dumbbell, badgeKey: 'maintenance', keywords: 'máquinas mantenimiento sedes 3d' },
+        { href: '/retention', label: 'Socios', icon: Flame, badgeKey: 'atRisk', keywords: 'churn socios riesgo push' },
+        { href: '/locations-equipment', label: 'Equipamiento', icon: Dumbbell, badgeKey: 'maintenance', keywords: 'máquinas mantenimiento sedes ocupada series' },
       ],
     },
     { label: 'Crecimiento', items: [shared.community, shared.plan] },
@@ -59,9 +59,9 @@ export const navByVertical: Record<VerticalType, NavGroup[]> = {
 };
 
 export const verticalMeta: Record<VerticalType, { label: string; home: string; icon: LucideIcon; color: string }> = {
-  GYM_CHAIN: { label: 'Gym Chain', home: '/dashboard', icon: Building2, color: '#C6FF00' },
-  CORPORATE_WELLNESS: { label: 'Corporate Wellness', home: '/corporate', icon: Briefcase, color: '#38BDF8' },
-  COACH_STUDIO: { label: 'Coach Studio', home: '/coach', icon: GraduationCap, color: '#A78BFA' },
+  GYM_CHAIN: { label: 'Gym Chain', home: '/dashboard', icon: Building2, color: 'var(--color-gravl-volt)' },
+  CORPORATE_WELLNESS: { label: 'Corporate Wellness', home: '/corporate', icon: Briefcase, color: 'var(--color-gravl-cyan)' },
+  COACH_STUDIO: { label: 'Coach Studio', home: '/coach', icon: GraduationCap, color: 'var(--color-gravl-violet)' },
 };
 
 /** Rutas que pertenecen sin ambigüedad a una vertical. */

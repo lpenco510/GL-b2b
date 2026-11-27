@@ -9,7 +9,7 @@ Demo funcional sobre datos determinísticos. Las reglas de negocio ya están en 
 ### v0.3 · De demo a piloto (un partner real)
 - `packages/api-client` con los tipos de `domain`; reemplazar `mock-data` pantalla por pantalla.
 - Login real en el portal (staff del partner) y en la consola (SSO Google + MFA).
-- Conector EVO (el ERP de 9 Fitness): altas, bajas y check-ins.
+- Conector con el ERP del partner (en SportClub, el sistema detrás del carnet): altas, bajas, plan y señales de pago.
 - **Grupo de control del 10%** para medir el efecto real de los nudges.
 - Atribución: socio contactado → volvió en 72 h → ingreso recuperado.
 
@@ -35,13 +35,13 @@ La misma cuenta que hoy usa la app (ver `04-identidad-y-datos.md`):
 - Reporte mensual automático en PDF para el dueño y QBR para la consola.
 - Tests e2e (Playwright) de los flujos críticos: nudge, derivación a staff, reto, mantenimiento.
 
-## Preguntas abiertas (necesito tus respuestas)
+## Preguntas abiertas para los founders
 
-1. **Mercados reales:** ¿en qué países opera hoy GRAVL B2C y en cuáles hay partners o conversaciones? Los estados de `markets.ts` son supuestos.
-2. **Backend actual:** ¿la app usa .NET como dice el PRD? ¿Qué proveedor de identidad (Auth0, Firebase, Cognito, propio)? Define cómo se implementa el realm de partners.
-3. **Precio real:** ¿hay precios ya conversados con 9 Fitness u otros? Los del playbook son de partida.
-4. **Costo por usuario activo:** ¿cuánto cuesta hoy un MAU (infra + IA)? Sin ese número el piso de margen es una suposición.
-5. **Revenue share con low-cost:** ¿GRAVL Pro se vende dentro de la app con la marca del gimnasio o con la de GRAVL? Cambia el contrato y la UX.
-6. **Coaches:** ¿queremos procesar pagos de sus clientes (marketplace)? Implica KYC, impuestos y soporte; es otra escala de compromiso.
-7. **Socio que deja el gimnasio:** ¿estamos dispuestos a ofrecerle GRAVL directo? Es el puente B2B → B2C, pero algunos partners lo van a sentir como competencia.
-8. **Agregadores:** ¿hay conversación con Wellhub o TotalPass? Define el go-to-market en BR y MX.
+1. **Ticket:** ingreso neto por suscriptor Pro (después de las tiendas), mix mensual/anual, costo por usuario activo (ver `01-negocio.md` §11).
+2. **API:** ¿se pueden sumar scopes B2B (`partner:activity`, `partner:messaging`) y webhooks a `api.gravl.ai`? Es la base técnica de todo el B2B.
+3. **Backend del core:** ¿en qué está hecho? Si es .NET, el Partner API va en .NET con el mismo equipo.
+4. **Panel de partner actual:** la web de Empresas ya promete uno. ¿Existe algo construido o es este?
+5. **MrFit MX:** ¿qué aprendieron con ese cliente? Precio, activación, qué usan del panel.
+6. **Creadores → coaches:** ¿el programa de Creadores puede ser la puerta de entrada al segmento coach?
+7. **Socio que deja el gimnasio:** ¿le ofrecemos seguir con GRAVL directo? Es la ventaja de datos (§10), pero hay que acordarlo en el contrato.
+8. **SportClub:** ¿hay contacto? ¿Su app "SportClub Carnet" puede hacer el vínculo con GRAVL en un toque?

@@ -3,20 +3,42 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { locations } from '@gravl/mock-data';
-import IsometricGymFloor from '@/components/equipment/IsometricGymFloor';
-import { ZONES, capexHint, usageColor, zoneMeta } from '@/components/equipment/zones';
-import { Badge, Button, Card, PageHeader, ProgressBar, Segmented } from '@gravl/ui';
+import { fmtInt } from '@gravl/domain';
+import { busyRate, equipmentHint, ZONES, zoneMeta } from '@/components/equipment/zones';
+import { Badge, Button, Card, CardHeader, KpiTile, PageHeader, ProgressBar, Segmented, cn } from '@gravl/ui';
 import type { EquipmentZone, GymMachine } from '@gravl/domain';
-import { CheckCircle2, MapPin, Wrench } from 'lucide-react';
+import { ChevronDown, ClipboardList, Dumbbell, Hand, MapPin, Repeat2, Wrench } from 'lucide-react';
 
-export default function LocationsEquipmentPage() {
+const SOURCES = [
+  {
+    icon: ClipboardList,
+    title: 'Inventario de la sede',
+    text: 'Lo carga la sede una vez. GRAVL lo usa para armar cada rutina solo con lo que existe ahí.',
+  },
+  {
+    icon: Repeat2,
+    title: 'Series registradas',
+    text: 'Cada serie que un socio marca en la app queda asociada a una máquina. Es uso real, no un estimado.',
+  },
+  {
+    icon: Hand,
+    title: '"¿Máquina ocupada?"',
+    text: 'Cuando un socio la encuentra ocupada, toca "cambiar ejercicio". Ese toque es demanda insatisfecha medida.',
+  },
+];
+
+export default function EquipmentPage() {
   const { selectedLocationId, setSelectedLocationId, getMachineStatus, setMachineStatus, addToast } = useApp();
   const location = locations.find((l) => l.id === selectedLocationId) ?? locations[0];
   const [zone, setZone] = useState<EquipmentZone | 'ALL'>('ALL');
   const machines = location.equipmentProfile.machines;
-  const filtered = machines.filter((m) => zone === 'ALL' || m.zone === zone);
-  const downCount = machines.filter((m) => getMachineStatus(m) === 'MAINTENANCE').length;
-  const hot = machines.filter((m) => m.weeklyUsageRate >= 85).length;
+  const rows = machines
+    .filter((m) => zone === 'ALL' || m.zone === zone)
+    .sort((a, b) => busyRate(b.busySwaps30d, b.loggedSets30d) - busyRate(a.busySwaps30d, a.loggedSets30d));
+  const totalSets = machines.reduce((a, m) => a + (m.loggedSets30d ?? 0), 0);
+  const totalSwaps = machines.reduce((a, m) => a + (m.busySwaps30d ?? 0), 0);
+  const down = machines.filter((m) => getMachineStatus(m) === 'MAINTENANCE').length;
+  const maxSets = Math.max(...machines.map((m) => m.loggedSets30d ?? 0));
   const p = location.equipmentProfile;
 
   const toggle = (m: GymMachine) => {
@@ -25,8 +47,8 @@ export default function LocationsEquipmentPage() {
     setMachineStatus(m.machineId, next);
     addToast(
       next === 'MAINTENANCE'
-        ? `${m.name} fuera de servicio en ${location.shortName}. Rutinas recalculadas en la app.`
-        : `${m.name} restaurada en ${location.shortName}.`,
+        ? `${m.name} fuera de servicio en ${location.shortName}. La app deja de incluirla en las rutinas.`
+        : `${m.name} vuelve a las rutinas de ${location.shortName}.`,
       next === 'MAINTENANCE' ? 'warning' : 'success',
       { label: 'Deshacer', onClick: () => setMachineStatus(m.machineId, prev) },
     );
@@ -35,134 +57,125 @@ export default function LocationsEquipmentPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Equipamiento & Planta"
-        badge={<Badge tone="cyan">Equipment-aware AI</Badge>}
-        description="GRAVL adapta cada rutina al inventario exacto de barras, discos y máquinas de cada sede. Si sacás una máquina de servicio, la app la reemplaza sola."
+        eyebrow={`Sede ${location.tier} · ${location.region}`}
+        title={
+          <>
+            Equipamiento<span className="text-gravl-text-muted">.</span>
+          </>
+        }
+        description="GRAVL arma cada rutina con lo que hay en cada sede. Acá mantenés ese inventario y ves qué máquinas faltan, según lo que tus socios registran."
         actions={
-          <div role="group" aria-label="Sede" className="flex flex-wrap gap-2">
-            {locations.map((loc) => {
-              const active = loc.id === location.id;
-              return (
-                <Button key={loc.id} size="sm" variant={active ? 'primary' : 'secondary'} icon={MapPin} aria-pressed={active} onClick={() => setSelectedLocationId(loc.id)}>
-                  {loc.shortName}
-                </Button>
-              );
-            })}
-          </div>
+          <label className="relative flex items-center gap-2 rounded-xl border border-gravl-line bg-gravl-card py-2 pl-3 pr-2 transition-colors hover:border-gravl-text/25">
+            <MapPin size={14} className="text-gravl-text-muted" aria-hidden />
+            <span className="sr-only">Sede</span>
+            <select value={location.id} onChange={(e) => setSelectedLocationId(e.target.value)} className="appearance-none bg-transparent pr-6 text-sm font-semibold text-gravl-text focus:outline-none">
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>{l.name}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="pointer-events-none absolute right-2 text-gravl-text-muted" aria-hidden />
+          </label>
         }
       />
 
-      {selectedLocationId === 'all' && (
-        <p className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-2.5 text-xs text-gravl-text-secondary">
-          Estás viendo toda la red en el resto del panel. El plano muestra una sede a la vez: elegí cuál arriba.
-        </p>
-      )}
-
-      <IsometricGymFloor location={location} />
-
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Card className="p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">Estaciones</p>
-          <p className="tabular-nums mt-1 text-2xl font-black text-white">{machines.length}</p>
-          <p className="mt-1 text-xs">
-            {downCount ? <span className="font-semibold text-rose-400">{downCount} en mantenimiento</span> : <span className="text-gravl-emerald">Todas operativas</span>}
-          </p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">Cuellos de botella</p>
-          <p className="tabular-nums mt-1 text-2xl font-black text-white">{hot}</p>
-          <p className="mt-1 text-xs text-gravl-text-muted">con saturación ≥ 85%</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">Discos para redondeo</p>
-          <div className="mt-2 flex flex-wrap gap-1">
-            {p.availablePlates.map((plate) => (
-              <span key={plate} className="tabular-nums rounded-md border border-gravl-volt/20 bg-gravl-volt/10 px-1.5 py-0.5 text-[11px] font-bold text-gravl-volt">
-                {String(plate).replace('.', ',')}
-              </span>
-            ))}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {SOURCES.map((s, i) => (
+          <div key={s.title} className="flex gap-3 rounded-[var(--radius-gravl)] border border-dashed border-gravl-line p-4">
+            <span className="gravl-num mt-0.5 text-[28px] text-gravl-text-muted">{i + 1}</span>
+            <div>
+              <p className="flex items-center gap-1.5 text-[14px] font-semibold text-gravl-text">
+                <s.icon size={15} className="text-gravl-text-muted" aria-hidden /> {s.title}
+              </p>
+              <p className="mt-1 text-[13px] leading-relaxed text-gravl-text-muted">{s.text}</p>
+            </div>
           </div>
-          <p className="mt-1.5 text-[11px] text-gravl-text-muted">{p.weightUnit.toLowerCase()} · la app redondea cargas a estos discos</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">Mancuernero</p>
-          <p className="tabular-nums mt-1 text-2xl font-black text-white">
-            2–{p.dumbbellMax} <span className="text-sm font-semibold text-gravl-text-muted">kg</span>
-          </p>
-          <p className="mt-1 text-xs text-gravl-text-muted">saltos de {p.dumbbellStep} kg</p>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiTile label="Series registradas · 30 días" value={fmtInt(totalSets)} delta={`en ${machines.length} estaciones`} deltaDirection="none" source="app GRAVL" emphasis />
+        <KpiTile
+          label="Veces 'máquina ocupada'"
+          value={fmtInt(totalSwaps)}
+          delta={`${busyRate(totalSwaps, totalSets).toFixed(1).replace('.', ',')}% de las búsquedas`}
+          deltaDirection="none"
+          icon={Hand}
+          source="botón 'cambiar ejercicio' de la app"
+        />
+        <KpiTile label="Fuera de servicio" value={down} delta={down ? 'la app ya las reemplaza' : 'todo operativo'} deltaDirection="none" icon={Wrench} />
+        <Card className="p-5">
+          <p className="gravl-label">Lo que la app sabe de esta sede</p>
+          <dl className="mt-3 space-y-2 text-[13px]">
+            <div className="flex justify-between"><dt className="text-gravl-text-muted">Mancuernas</dt><dd className="font-semibold text-gravl-text">2–{p.dumbbellMax} kg · de a {p.dumbbellStep}</dd></div>
+            <div className="flex justify-between gap-3"><dt className="text-gravl-text-muted">Discos</dt><dd className="text-right font-semibold text-gravl-text">{p.availablePlates.map((x) => String(x).replace('.', ',')).join(' · ')} kg</dd></div>
+            <div className="flex justify-between"><dt className="text-gravl-text-muted">Unidad</dt><dd className="font-semibold text-gravl-text">{p.weightUnit.toLowerCase()}</dd></div>
+          </dl>
+          <p className="mt-3 text-xs text-gravl-text-muted">Con esto la app redondea cada carga a lo que el socio puede armar.</p>
         </Card>
       </div>
 
       <Card>
-        <div className="border-b border-white/[0.06] p-4">
+        <div className="flex flex-col gap-3 border-b border-gravl-line p-4 md:flex-row md:items-center md:justify-between">
+          <CardHeader icon={Dumbbell} title="Máquinas" subtitle="Ordenadas por fricción: % de veces que un socio la buscó y estaba ocupada." />
           <Segmented<EquipmentZone | 'ALL'>
             label="Filtrar por zona"
+            size="sm"
             value={zone}
             onChange={setZone}
-            options={[
-              { value: 'ALL', label: 'Todas', count: machines.length },
-              ...ZONES.map((z) => ({ value: z, label: zoneMeta[z].label, count: machines.filter((m) => m.zone === z).length })),
-            ]}
+            options={[{ value: 'ALL', label: 'Todas' }, ...ZONES.map((z) => ({ value: z, label: zoneMeta[z].label }))]}
           />
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px]">
-            <caption className="sr-only">Inventario de {location.name}</caption>
+          <table className="w-full min-w-[820px] text-[14px]">
+            <caption className="sr-only">Inventario y demanda de {location.name}</caption>
             <thead>
-              <tr className="border-b border-white/[0.06] text-left text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">
-                <th scope="col" className="px-5 py-3">Estación</th>
-                <th scope="col" className="px-3 py-3">Zona</th>
-                <th scope="col" className="px-3 py-3">Cant.</th>
-                <th scope="col" className="px-3 py-3">Saturación semanal</th>
-                <th scope="col" className="px-3 py-3">Sugerencia CapEx</th>
-                <th scope="col" className="px-3 py-3">Estado en app</th>
-                <th scope="col" className="px-5 py-3 text-right"><span className="sr-only">Acción</span></th>
+              <tr className="text-left">
+                <th scope="col" className="gravl-label px-5 py-3">Máquina</th>
+                <th scope="col" className="gravl-label px-3 py-3 text-right">Cant.</th>
+                <th scope="col" className="gravl-label px-3 py-3">Series · 30 días</th>
+                <th scope="col" className="gravl-label px-3 py-3">Ocupada</th>
+                <th scope="col" className="gravl-label px-3 py-3">Lectura</th>
+                <th scope="col" className="gravl-label px-5 py-3 text-right">En la app</th>
               </tr>
             </thead>
             <tbody>
-              {[...filtered]
-                .sort((a, b) => b.weeklyUsageRate - a.weeklyUsageRate)
-                .map((m) => {
-                  const status = getMachineStatus(m);
-                  const z = zoneMeta[m.zone];
-                  const hint = capexHint(m.weeklyUsageRate);
-                  return (
-                    <tr key={m.machineId} className="border-b border-white/[0.03] transition-colors hover:bg-white/[0.02]">
-                      <td className="px-5 py-3 text-sm font-semibold text-white">{m.name}</td>
-                      <td className="px-3 py-3">
-                        <span className="rounded-md px-2 py-0.5 text-[11px] font-semibold" style={{ background: `${z.color}15`, color: z.color }}>
-                          {z.label}
-                        </span>
-                      </td>
-                      <td className="tabular-nums px-3 py-3 text-sm text-white">{m.quantity}</td>
-                      <td className="px-3 py-3">
-                        <div className="flex w-36 items-center gap-2">
-                          <ProgressBar value={m.weeklyUsageRate} color={usageColor(m.weeklyUsageRate)} label={`Saturación ${m.weeklyUsageRate}%`} />
-                          <span className="tabular-nums w-9 text-right text-xs font-bold" style={{ color: usageColor(m.weeklyUsageRate) }}>
-                            {m.weeklyUsageRate}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3"><Badge tone={hint.tone}>{hint.label}</Badge></td>
-                      <td className="px-3 py-3">
-                        {status === 'OPERATIONAL' ? (
-                          <Badge tone="emerald" icon={CheckCircle2}>Operativa</Badge>
-                        ) : (
-                          <Badge tone="crimson" icon={Wrench}>Mantenimiento</Badge>
-                        )}
-                      </td>
-                      <td className="px-5 py-3 text-right">
-                        <Button size="sm" variant={status === 'OPERATIONAL' ? 'danger' : 'success'} icon={Wrench} onClick={() => toggle(m)}>
-                          {status === 'OPERATIONAL' ? 'Sacar de servicio' : 'Restaurar'}
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
+              {rows.map((m) => {
+                const status = getMachineStatus(m);
+                const rate = busyRate(m.busySwaps30d, m.loggedSets30d);
+                const hint = equipmentHint(rate, m.loggedSets30d ?? 0);
+                return (
+                  <tr key={m.machineId} className={cn('gravl-row border-t border-gravl-line', status === 'MAINTENANCE' && 'opacity-60')}>
+                    <td className="px-5 py-3">
+                      <p className="font-semibold text-gravl-text">{m.name}</p>
+                      <p className="text-xs text-gravl-text-muted">{zoneMeta[m.zone].label}</p>
+                    </td>
+                    <td className="tabular-nums px-3 py-3 text-right text-gravl-text-secondary">{m.quantity}</td>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-2">
+                        <ProgressBar value={m.loggedSets30d ?? 0} max={maxSets} className="w-28" label="Series registradas" />
+                        <span className="tabular-nums text-gravl-text-secondary">{fmtInt(m.loggedSets30d ?? 0)}</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className="gravl-num text-[22px] text-gravl-text">{rate.toFixed(1).replace('.', ',')}%</span>
+                      <span className="ml-1.5 text-xs text-gravl-text-muted">{fmtInt(m.busySwaps30d ?? 0)} veces</span>
+                    </td>
+                    <td className="px-3 py-3"><Badge tone={hint.tone}>{hint.label}</Badge></td>
+                    <td className="px-5 py-3 text-right">
+                      <Button size="sm" variant={status === 'OPERATIONAL' ? 'ghost' : 'success'} icon={Wrench} onClick={() => toggle(m)}>
+                        {status === 'OPERATIONAL' ? 'Sacar de servicio' : 'Restaurar'}
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </Card>
+      <p className="text-xs text-gravl-text-muted">
+        Muestra: socios con GRAVL de esta sede. Sirve para comparar máquinas entre sí; no mide la ocupación total de la sala.
+      </p>
     </div>
   );
 }

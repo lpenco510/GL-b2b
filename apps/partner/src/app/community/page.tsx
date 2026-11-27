@@ -6,16 +6,16 @@ import { useApp } from '@/context/AppContext';
 import { REFERENCE_NOW, leaderboard, locationName, locations, networkBenchmarks, organization } from '@gravl/mock-data';
 import { scopeStats } from '@gravl/mock-data';
 import { fmtCompact, fmtDate, fmtInt } from '@gravl/domain';
-import { cn } from '@gravl/ui';
+import { cn, tint } from '@gravl/ui';
 import { Avatar, Badge, Button, Card, CardHeader, Field, PageHeader, ProgressBar } from '@gravl/ui';
 import { Modal } from '@gravl/ui';
 import type { ChallengeMetric, GymChallenge } from '@gravl/domain';
 import { Calendar, Dumbbell, Gift, Medal, Plus, Smartphone, Target, TrendingUp, Trophy, Users, type LucideIcon } from 'lucide-react';
 
 const metricMeta: Record<ChallengeMetric, { label: string; desc: string; unit: string; icon: LucideIcon; color: string; defaultTarget: number }> = {
-  WORKOUT_COUNT: { label: 'Constancia', desc: 'Cantidad de sesiones', unit: 'sesiones', icon: Target, color: '#C6FF00', defaultTarget: 12 },
-  STRENGTH_SCORE_GAIN: { label: 'Fuerza', desc: 'Mejora de Strength Score', unit: 'pts', icon: TrendingUp, color: '#38BDF8', defaultTarget: 20 },
-  TOTAL_VOLUME_KG: { label: 'Volumen', desc: 'Kilos colectivos', unit: 'kg', icon: Dumbbell, color: '#F59E0B', defaultTarget: 250_000 },
+  WORKOUT_COUNT: { label: 'Constancia', desc: 'Cantidad de sesiones', unit: 'sesiones', icon: Target, color: 'var(--color-gravl-volt)', defaultTarget: 12 },
+  STRENGTH_SCORE_GAIN: { label: 'Fuerza', desc: 'Mejora de Strength Score', unit: 'pts', icon: TrendingUp, color: 'var(--color-gravl-cyan)', defaultTarget: 20 },
+  TOTAL_VOLUME_KG: { label: 'Volumen', desc: 'Kilos colectivos', unit: 'kg', icon: Dumbbell, color: 'var(--color-gravl-amber)', defaultTarget: 250_000 },
 };
 
 const statusTone = { ACTIVE: 'emerald', UPCOMING: 'cyan', COMPLETED: 'neutral' } as const;
@@ -123,16 +123,16 @@ export default function CommunityPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
-          { l: 'Socios en el grupo oficial', v: fmtInt(stats.total), c: '#F8FAFC', i: Users },
-          { l: 'Sesiones / semana por socio', v: String(networkBenchmarks.avgWorkoutsPerWeek).replace('.', ','), c: '#C6FF00', i: Target },
-          { l: 'Strength Score promedio (30 d)', v: `+${networkBenchmarks.avgStrengthScoreGrowth}`, c: '#38BDF8', i: TrendingUp },
+          { l: 'Socios en el grupo oficial', v: fmtInt(stats.total), c: 'var(--color-gravl-text)', i: Users },
+          { l: 'Sesiones / semana por socio', v: String(networkBenchmarks.avgWorkoutsPerWeek).replace('.', ','), c: 'var(--color-gravl-volt)', i: Target },
+          { l: 'Strength Score promedio (30 d)', v: `+${networkBenchmarks.avgStrengthScoreGrowth}`, c: 'var(--color-gravl-cyan)', i: TrendingUp },
         ].map((s) => (
           <Card key={s.l} className="flex items-center gap-4 p-5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-gravl-text/[0.08] bg-gravl-text/[0.03]">
               <s.i size={18} style={{ color: s.c }} aria-hidden />
             </span>
             <div>
-              <p className="tabular-nums text-2xl font-black" style={{ color: s.c }}>{s.v}</p>
+              <p className="gravl-num text-[34px]" style={{ color: s.c }}>{s.v}</p>
               <p className="text-xs text-gravl-text-muted">{s.l}</p>
             </div>
           </Card>
@@ -150,12 +150,12 @@ export default function CommunityPage() {
             return (
               <Card key={ch.id} interactive className={cn('flex flex-col p-5', ch.status === 'ACTIVE' && 'border-gravl-volt/20')}>
                 <div className="flex items-center justify-between">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: `${meta.color}15`, color: meta.color }}>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: `${tint(meta.color, 8)}`, color: meta.color }}>
                     <Icon size={17} aria-hidden />
                   </span>
                   <Badge tone={statusTone[ch.status]}>{statusLabel[ch.status]}</Badge>
                 </div>
-                <h4 className="mt-3 text-sm font-bold text-white">{ch.title}</h4>
+                <h4 className="mt-3 text-sm font-bold text-gravl-text">{ch.title}</h4>
                 <p className="mt-0.5 text-[11px] text-gravl-text-muted">{meta.label} · objetivo {fmtCompact(ch.targetValue)} {meta.unit}</p>
 
                 {ch.status === 'ACTIVE' && (
@@ -182,7 +182,7 @@ export default function CommunityPage() {
                     <Gift size={12} className="mt-0.5 shrink-0" aria-hidden /> {ch.rewardDescription}
                   </li>
                 </ul>
-                <div className="mt-4 flex flex-wrap gap-1.5 border-t border-white/[0.05] pt-3">
+                <div className="mt-4 flex flex-wrap gap-1.5 border-t border-gravl-text/[0.05] pt-3">
                   {(ch.locationIds?.length ? ch.locationIds : ['all']).map((id) => (
                     <Badge key={id}>{id === 'all' ? 'Toda la red' : locationName(id)}</Badge>
                   ))}
@@ -208,7 +208,7 @@ export default function CommunityPage() {
           <table className="w-full min-w-[640px]">
             <caption className="sr-only">Ranking mensual por Strength Score</caption>
             <thead>
-              <tr className="border-b border-white/[0.06] text-left text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">
+              <tr className="border-b border-gravl-text/[0.06] text-left text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">
                 <th scope="col" className="px-3 py-3">#</th>
                 <th scope="col" className="px-3 py-3">Socio</th>
                 <th scope="col" className="px-3 py-3">Strength Score</th>
@@ -219,15 +219,15 @@ export default function CommunityPage() {
             </thead>
             <tbody>
               {board.map((e) => (
-                <tr key={e.rank} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+                <tr key={e.rank} className="border-b border-gravl-text/[0.03] hover:bg-gravl-text/[0.02]">
                   <td className="px-3 py-3">
                     <span
                       className={cn(
                         'tabular-nums inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-black',
-                        e.rank === 1 && 'bg-gravl-volt text-gravl-canvas',
-                        e.rank === 2 && 'bg-slate-300 text-gravl-canvas',
-                        e.rank === 3 && 'bg-amber-600 text-white',
-                        e.rank > 3 && 'bg-white/[0.05] text-gravl-text-secondary',
+                        e.rank === 1 && 'bg-gravl-lime text-gravl-ink',
+                        e.rank === 2 && 'bg-slate-300 text-gravl-ink',
+                        e.rank === 3 && 'bg-amber-600 text-gravl-text',
+                        e.rank > 3 && 'bg-gravl-text/[0.05] text-gravl-text-secondary',
                       )}
                     >
                       {e.rank}
@@ -237,14 +237,14 @@ export default function CommunityPage() {
                     <span className="flex items-center gap-2.5">
                       <Avatar name={e.name} size={28} />
                       <span>
-                        <span className="block text-sm font-semibold text-white">{e.name}</span>
+                        <span className="block text-sm font-semibold text-gravl-text">{e.name}</span>
                         <span className="block text-[10px] text-gravl-text-muted">{locationName(e.locationId)}</span>
                       </span>
                     </span>
                   </td>
                   <td className="tabular-nums px-3 py-3 text-sm font-bold text-gravl-cyan">{e.strengthScore}</td>
                   <td className="tabular-nums px-3 py-3 text-sm font-semibold text-gravl-emerald">+{e.delta}</td>
-                  <td className="tabular-nums px-3 py-3 text-sm text-white">{e.workouts}</td>
+                  <td className="tabular-nums px-3 py-3 text-sm text-gravl-text">{e.workouts}</td>
                   <td className="tabular-nums px-3 py-3 text-right text-sm text-gravl-text-secondary">{fmtInt(e.volume)} kg</td>
                 </tr>
               ))}
@@ -279,12 +279,12 @@ export default function CommunityPage() {
                   onClick={() => setDraft((d) => ({ ...d, metric: k, target: m.defaultTarget }))}
                   className={cn(
                     'flex items-center gap-3 rounded-xl border p-3 text-left transition-colors sm:flex-col sm:items-start',
-                    active ? 'border-gravl-volt/50 bg-gravl-volt/[0.07]' : 'border-white/[0.08] hover:border-white/[0.16]',
+                    active ? 'border-gravl-volt/50 bg-gravl-volt/[0.07]' : 'border-gravl-text/[0.08] hover:border-gravl-text/[0.16]',
                   )}
                 >
                   <m.icon size={18} style={{ color: m.color }} aria-hidden />
                   <span>
-                    <span className="block text-sm font-bold text-white">{m.label}</span>
+                    <span className="block text-sm font-bold text-gravl-text">{m.label}</span>
                     <span className="block text-[11px] text-gravl-text-muted">{m.desc}</span>
                   </span>
                 </button>
@@ -344,7 +344,7 @@ export default function CommunityPage() {
                 onClick={() => set('locationIds', [])}
                 className={cn(
                   'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
-                  draft.locationIds.length === 0 ? 'border-gravl-volt/50 bg-gravl-volt/10 text-gravl-volt' : 'border-white/[0.1] text-gravl-text-secondary hover:text-white',
+                  draft.locationIds.length === 0 ? 'border-gravl-volt/50 bg-gravl-volt/10 text-gravl-volt' : 'border-gravl-text/[0.1] text-gravl-text-secondary hover:text-gravl-text',
                 )}
               >
                 Toda la red
@@ -359,7 +359,7 @@ export default function CommunityPage() {
                     onClick={() => set('locationIds', on ? draft.locationIds.filter((x) => x !== l.id) : [...draft.locationIds, l.id])}
                     className={cn(
                       'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
-                      on ? 'border-gravl-volt/50 bg-gravl-volt/10 text-gravl-volt' : 'border-white/[0.1] text-gravl-text-secondary hover:text-white',
+                      on ? 'border-gravl-volt/50 bg-gravl-volt/10 text-gravl-volt' : 'border-gravl-text/[0.1] text-gravl-text-secondary hover:text-gravl-text',
                     )}
                   >
                     {l.shortName}

@@ -38,23 +38,23 @@ export default function NudgeComposer({
               onClick={() => onTemplate(t.id)}
               className={cn(
                 'rounded-xl border p-2.5 text-left transition-colors',
-                active ? 'border-gravl-volt/50 bg-gravl-volt/[0.08]' : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.16]',
+                active ? 'border-gravl-volt/50 bg-gravl-volt/[0.08]' : 'border-gravl-text/[0.08] bg-gravl-text/[0.02] hover:border-gravl-text/[0.16]',
               )}
             >
-              <p className={cn('text-xs font-bold', active ? 'text-gravl-volt' : 'text-white')}>{t.label}</p>
+              <p className={cn('text-xs font-bold', active ? 'text-gravl-volt' : 'text-gravl-text')}>{t.label}</p>
               <p className="mt-0.5 text-[10px] capitalize text-gravl-text-muted">{t.tone}</p>
             </button>
           );
         })}
       </div>
 
-      <div className="rounded-2xl border border-white/[0.08] bg-black/40 p-3">
-        <div className="flex items-start gap-2.5 rounded-xl bg-white/[0.06] p-3 backdrop-blur">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gravl-volt text-[9px] font-black text-gravl-canvas">
+      <div className="rounded-2xl border border-gravl-text/[0.08] bg-black/40 p-3">
+        <div className="flex items-start gap-2.5 rounded-xl bg-gravl-text/[0.06] p-3 backdrop-blur">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gravl-lime text-[9px] font-black text-gravl-ink">
             {organization.shortName}
           </span>
           <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-white">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-gravl-text">
               {organization.name} <span className="font-normal text-gravl-text-muted">· ahora</span>
             </p>
             <p className="mt-0.5 text-xs leading-snug text-gravl-text">{renderTemplate(tpl.body, member)}</p>

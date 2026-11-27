@@ -5,10 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { locationName, members, nudgeTemplates } from '@gravl/mock-data';
 import { inSegment, membersInScope, segmentCount, type MemberSegment } from '@gravl/mock-data';
-import { cancelIntentLabel, nudgeDecision, type Deal } from '@gravl/domain';
+import { cancelIntentLabel, nudgeDecisionFor, policyFor, type Deal } from '@gravl/domain';
 import { useDeal } from '@/components/layout/useTenant';
 import { daysSince, fmtInt, fmtPct, fmtRelative } from '@gravl/domain';
-import { cn } from '@gravl/ui';
+import { cn, tint } from '@gravl/ui';
 import { Avatar, Badge, Button, Card, CardHeader, EmptyState, PageHeader, ProgressBar, Toggle } from '@gravl/ui';
 import { Modal } from '@gravl/ui';
 import MemberDrawer from '@/components/retention/MemberDrawer';
@@ -24,18 +24,20 @@ const PAGE_SIZE = 25;
 
 type SegmentDef = { key: MemberSegment; label: string; icon: LucideIcon; color: string; hint: string };
 const SEG: Record<MemberSegment, SegmentDef> = {
-  ALL: { key: 'ALL', label: 'Todos', icon: Users, color: '#94A3B8', hint: 'Socios con la app vinculada' },
-  ON_FIRE: { key: 'ON_FIRE', label: 'On Fire', icon: Flame, color: '#C6FF00', hint: '3+ sesiones y racha ≥4 sem.' },
-  ACTIVE: { key: 'ACTIVE', label: 'Activos', icon: Zap, color: '#22C55E', hint: 'Entrenaron en los últimos días' },
-  NEEDS_NUDGE: { key: 'NEEDS_NUDGE', label: 'Necesitan nudge', icon: Bell, color: '#F59E0B', hint: '5–13 días sin entrenar' },
-  AT_RISK: { key: 'AT_RISK', label: 'En riesgo', icon: AlertTriangle, color: '#EF4444', hint: '14+ días sin entrenar' },
-  CANCEL_INTENT: { key: 'CANCEL_INTENT', label: 'Intención de baja', icon: PhoneCall, color: '#F472B6', hint: 'Baja, débito rechazado o congelamiento' },
-  DORMANT: { key: 'DORMANT', label: 'Durmientes', icon: Moon, color: '#38BDF8', hint: 'Pagan y no vienen · protegidos' },
-  NEW_JOINERS: { key: 'NEW_JOINERS', label: 'Altas < 5 sesiones', icon: UserPlus, color: '#38BDF8', hint: 'Primer mes bajo el hito' },
+  ALL: { key: 'ALL', label: 'Todos', icon: Users, color: 'var(--color-gravl-text-secondary)', hint: 'Socios con la app vinculada' },
+  ON_FIRE: { key: 'ON_FIRE', label: 'On Fire', icon: Flame, color: 'var(--color-gravl-volt)', hint: '3+ sesiones y racha ≥4 sem.' },
+  ACTIVE: { key: 'ACTIVE', label: 'Activos', icon: Zap, color: 'var(--color-gravl-emerald)', hint: 'Entrenaron en los últimos días' },
+  NEEDS_NUDGE: { key: 'NEEDS_NUDGE', label: 'Necesitan nudge', icon: Bell, color: 'var(--color-gravl-amber)', hint: '5–13 días sin entrenar' },
+  AT_RISK: { key: 'AT_RISK', label: 'En riesgo', icon: AlertTriangle, color: 'var(--color-gravl-crimson)', hint: '14+ días sin entrenar' },
+  CANCEL_INTENT: { key: 'CANCEL_INTENT', label: 'Intención de baja', icon: PhoneCall, color: 'var(--color-gravl-crimson)', hint: 'Baja, débito rechazado o congelamiento' },
+  DORMANT: { key: 'DORMANT', label: 'Protegidos', icon: Moon, color: 'var(--color-gravl-cyan)', hint: 'Abono fijo, no vienen · no se contactan' },
+  NEW_JOINERS: { key: 'NEW_JOINERS', label: 'Altas < 5 sesiones', icon: UserPlus, color: 'var(--color-gravl-cyan)', hint: 'Primer mes bajo el hito' },
 };
 /** Qué segmentos importan depende de cómo gana plata el partner. */
 const segmentsFor = (deal: Deal): SegmentDef[] =>
-  (deal.monetization === 'BREAKAGE'
+  (deal.planPolicies?.length
+    ? (['ALL', 'ON_FIRE', 'NEEDS_NUDGE', 'AT_RISK', 'CANCEL_INTENT', 'DORMANT', 'NEW_JOINERS'] as const)
+    : deal.monetization === 'BREAKAGE'
     ? (['ALL', 'ON_FIRE', 'ACTIVE', 'DORMANT', 'CANCEL_INTENT'] as const)
     : (['ALL', 'ON_FIRE', 'ACTIVE', 'NEEDS_NUDGE', 'AT_RISK', 'CANCEL_INTENT', 'NEW_JOINERS'] as const)
   ).map((k) => SEG[k]);
@@ -83,7 +85,7 @@ export default function RetentionPage() {
   const { selectedLocationId, addToast, nudgedAt, markNudged, nudgeRules, toggleNudgeRule } = useApp();
   const deal = useDeal();
   const segments = segmentsFor(deal);
-  const decide = (m: B2BMemberTelemetry) => nudgeDecision(m, deal.contactPolicy, { lastNudgedAt: nudgedAt[m.userId] });
+  const decide = (m: B2BMemberTelemetry) => nudgeDecisionFor(m, deal, { lastNudgedAt: nudgedAt[m.userId] });
   const isNudgeable = (m: B2BMemberTelemetry) => decide(m).allowed;
   const [segment, setSegment] = useState<MemberSegment>('ALL');
   const [query, setQuery] = useState('');
@@ -147,8 +149,9 @@ export default function RetentionPage() {
       </Suspense>
 
       <PageHeader
-        title="Retención & Nudges"
-        description="Quién está entrenando, quién se está enfriando y a quién conviene escribirle hoy. Ordenado por riesgo de baja."
+        eyebrow="Retención"
+        title={<>Socios<span className="text-gravl-text-muted">.</span></>}
+        description="Quién entrena, quién se está enfriando y a quién conviene contactar hoy, según el plan de cada uno."
         actions={
           <Button icon={Download} onClick={() => exportCsv(filtered)} disabled={!filtered.length}>
             Exportar {fmtInt(filtered.length)}
@@ -172,7 +175,7 @@ export default function RetentionPage() {
                 'gravl-card gravl-card-interactive p-4 text-left',
                 active && 'ring-1',
               )}
-              style={active ? { borderColor: `${s.color}66`, boxShadow: `0 0 0 1px ${s.color}40, 0 12px 32px -12px ${s.color}40` } : undefined}
+              style={active ? { borderColor: `${tint(s.color, 40)}`, boxShadow: `0 0 0 1px ${tint(s.color, 25)}, 0 12px 32px -12px ${tint(s.color, 25)}` } : undefined}
             >
               <span className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide" style={{ color: s.color }}>
@@ -182,7 +185,7 @@ export default function RetentionPage() {
                   <span className="tabular-nums text-[10px] text-gravl-text-muted">{fmtPct((count / Math.max(1, total)) * 100)}</span>
                 )}
               </span>
-              <span className="tabular-nums mt-2 block font-mono text-2xl font-black text-white">{fmtInt(count)}</span>
+              <span className="mt-2 block gravl-num text-[34px] text-gravl-text">{fmtInt(count)}</span>
               <span className="mt-0.5 block truncate text-[11px] text-gravl-text-muted">{s.hint}</span>
             </button>
           );
@@ -191,7 +194,7 @@ export default function RetentionPage() {
 
       {/* Tabla */}
       <Card>
-        <div className="flex flex-col gap-3 border-b border-white/[0.06] p-4 lg:flex-row lg:items-center">
+        <div className="flex flex-col gap-3 border-b border-gravl-text/[0.06] p-4 lg:flex-row lg:items-center">
           <label className="relative flex-1">
             <span className="sr-only">Buscar socios</span>
             <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gravl-text-muted" aria-hidden />
@@ -234,7 +237,7 @@ export default function RetentionPage() {
 
         {selected.size > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gravl-volt/20 bg-gravl-volt/[0.06] px-4 py-2.5">
-            <p className="text-xs font-semibold text-white">
+            <p className="text-xs font-semibold text-gravl-text">
               <span className="tabular-nums">{fmtInt(selected.size)}</span> socios seleccionados
             </p>
             <div className="flex gap-2">
@@ -259,7 +262,7 @@ export default function RetentionPage() {
             <table className="w-full min-w-[980px]">
               <caption className="sr-only">Socios del segmento seleccionado</caption>
               <thead>
-                <tr className="border-b border-white/[0.06] text-left text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">
+                <tr className="border-b border-gravl-text/[0.06] text-left text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">
                   <th scope="col" className="w-10 px-4 py-3">
                     <input
                       type="checkbox"
@@ -273,11 +276,12 @@ export default function RetentionPage() {
                           return next;
                         })
                       }
-                      className="h-4 w-4 accent-[#C6FF00]"
+                      className="h-4 w-4 accent-[var(--color-gravl-volt)]"
                     />
                   </th>
                   <th scope="col" className="px-3 py-3">Socio</th>
                   {selectedLocationId === 'all' && <th scope="col" className="px-3 py-3">Sede</th>}
+                  {deal.planPolicies && <th scope="col" className="px-3 py-3">Plan</th>}
                   <th scope="col" className="px-3 py-3">Racha</th>
                   <th scope="col" className="px-3 py-3">Última sesión</th>
                   <th scope="col" className="px-3 py-3">Sesiones 30 d</th>
@@ -298,7 +302,7 @@ export default function RetentionPage() {
                       key={m.userId}
                       onClick={() => setDrawerMember(m)}
                       className={cn(
-                        'cursor-pointer border-b border-white/[0.03] transition-colors hover:bg-white/[0.025]',
+                        'gravl-row cursor-pointer border-b border-gravl-line',
                         selected.has(m.userId) && 'bg-gravl-volt/[0.04]',
                       )}
                     >
@@ -309,7 +313,7 @@ export default function RetentionPage() {
                           checked={selected.has(m.userId)}
                           disabled={!canNudge}
                           onChange={() => toggleRow(m.userId)}
-                          className="h-4 w-4 accent-[#C6FF00] disabled:opacity-30"
+                          className="h-4 w-4 accent-[var(--color-gravl-volt)] disabled:opacity-30"
                         />
                       </td>
                       <td className="px-3 py-3">
@@ -317,7 +321,7 @@ export default function RetentionPage() {
                           <Avatar name={m.fullName} size={32} />
                           <div className="min-w-0">
                             <button
-                              className="truncate text-left text-sm font-semibold text-white hover:underline"
+                              className="truncate text-left text-sm font-semibold text-gravl-text hover:underline"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setDrawerMember(m);
@@ -340,12 +344,17 @@ export default function RetentionPage() {
                         </div>
                       </td>
                       {selectedLocationId === 'all' && <td className="px-3 py-3 text-xs text-gravl-text-secondary">{locationName(m.locationId)}</td>}
+                      {deal.planPolicies && (
+                        <td className="px-3 py-3">
+                          <Badge tone={policyFor(deal, m.planId).monetization === 'ATTENDANCE' ? 'volt' : 'neutral'}>{policyFor(deal, m.planId).plan?.label ?? '—'}</Badge>
+                        </td>
+                      )}
                       <td className="px-3 py-3"><StreakDots weeks={m.currentStreakWeeks} /></td>
                       <td className={cn('tabular-nums px-3 py-3 text-xs', days >= 14 ? 'font-semibold text-rose-400' : days >= 5 ? 'text-gravl-amber' : 'text-gravl-text-secondary')}>
                         {days === 0 ? 'Hoy' : days === 1 ? 'Ayer' : `Hace ${days} d`}
                       </td>
                       <td className="px-3 py-3">
-                        <span className="tabular-nums text-sm font-semibold text-white">{m.workoutsLast30Days}</span>
+                        <span className="tabular-nums text-sm font-semibold text-gravl-text">{m.workoutsLast30Days}</span>
                         <span className="ml-1.5 text-[10px] text-gravl-text-muted">{m.workoutsThisWeek}/{m.weeklyTarget} sem.</span>
                       </td>
                       <td className="px-3 py-3">
@@ -416,7 +425,7 @@ export default function RetentionPage() {
           {nudgeRules.map((rule) => (
             <Card key={rule.id} className={cn('flex flex-col p-5', rule.enabled && 'border-gravl-volt/20')}>
               <div className="flex items-start justify-between gap-3">
-                <h4 className="flex items-center gap-2 text-sm font-bold text-white">
+                <h4 className="flex items-center gap-2 text-sm font-bold text-gravl-text">
                   <Zap size={15} className={rule.enabled ? 'text-gravl-volt' : 'text-gravl-text-muted'} aria-hidden />
                   {rule.name}
                 </h4>
@@ -439,7 +448,7 @@ export default function RetentionPage() {
                   <ProgressBar value={rule.recoveryRate} color="var(--color-gravl-emerald)" label="Tasa de recuperación" />
                 </div>
               )}
-              <div className="mt-4 flex items-center gap-4 border-t border-white/[0.05] pt-3 text-[11px] text-gravl-text-muted">
+              <div className="mt-4 flex items-center gap-4 border-t border-gravl-text/[0.05] pt-3 text-[11px] text-gravl-text-muted">
                 <span className="flex items-center gap-1">
                   <Bell size={11} aria-hidden /> <span className="tabular-nums">{rule.triggerCount}</span> disparos
                 </span>

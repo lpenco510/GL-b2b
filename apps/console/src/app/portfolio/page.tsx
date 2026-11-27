@@ -15,7 +15,7 @@ const stageMeta: Record<PortfolioPartner['stage'], { label: string; tone: Tone }
   NEGOTIATION: { label: 'Negociación', tone: 'amber' },
 };
 
-const healthColor = (h: number) => (h >= 75 ? '#22C55E' : h >= 60 ? '#F59E0B' : '#EF4444');
+const healthColor = (h: number) => (h >= 75 ? 'var(--color-gravl-emerald)' : h >= 60 ? 'var(--color-gravl-amber)' : 'var(--color-gravl-crimson)');
 
 export default function PortfolioPage() {
   const [market, setMarket] = useState<MarketCode | 'ALL'>('ALL');
@@ -35,7 +35,7 @@ export default function PortfolioPage() {
     <div className="space-y-6">
       <PageHeader
         title="Portafolio de partners"
-        description="Toda la cartera B2B en un lugar: ingresos, salud de cada cuenta y renovaciones. Esta vista nunca se expone a un partner."
+        description="Toda la cartera B2B en un lugar: salud de cada cuenta, activación y renovaciones. Esta vista nunca se expone a un partner. Cartera de ejemplo: partners y montos ficticios, salvo SportClub (prospecto) y MrFit MX (cliente citado en gravl.ai, sin datos)."
         actions={
           <Segmented<MarketCode | 'ALL'>
             label="Mercado"
@@ -48,10 +48,10 @@ export default function PortfolioPage() {
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiTile label="ARR" value={fmtUsdCompact(arr)} delta={`${live.length} cuentas con facturación`} deltaDirection="none" icon={CircleDollarSign} color="#38BDF8" glow="cyan" />
-        <KpiTile label="Usuarios activos B2B" value={fmtInt(users)} delta="facturables este mes" deltaDirection="none" icon={Users} color="#C6FF00" />
-        <KpiTile label="NRR ponderado" value={fmtPct(nrr)} delta={nrr >= 100 ? 'la base crece sola' : 'la base se achica'} deltaDirection={nrr >= 100 ? 'up' : 'down'} deltaGood={nrr >= 100} icon={Activity} color="#22C55E" />
-        <KpiTile label="Pipeline" value={String(pipeline.length)} delta={`${fmtInt(pipeline.reduce((a, p) => a + p.eligible, 0))} socios elegibles`} deltaDirection="none" icon={Handshake} color="#F59E0B" />
+        <KpiTile label="ARR" value={fmtUsdCompact(arr)} delta={`${live.length} cuentas con facturación`} deltaDirection="none" icon={CircleDollarSign} color="var(--color-gravl-cyan)" glow="cyan" />
+        <KpiTile label="Usuarios activos B2B" value={fmtInt(users)} delta="facturables este mes" deltaDirection="none" icon={Users} color="var(--color-gravl-volt)" />
+        <KpiTile label="NRR ponderado" value={fmtPct(nrr)} delta={nrr >= 100 ? 'la base crece sola' : 'la base se achica'} deltaDirection={nrr >= 100 ? 'up' : 'down'} deltaGood={nrr >= 100} icon={Activity} color="var(--color-gravl-emerald)" />
+        <KpiTile label="Pipeline" value={String(pipeline.length)} delta={`${fmtInt(pipeline.reduce((a, p) => a + p.eligible, 0))} socios elegibles`} deltaDirection="none" icon={Handshake} color="var(--color-gravl-amber)" />
       </div>
 
       {renewalsSoon.length > 0 && (
@@ -66,7 +66,7 @@ export default function PortfolioPage() {
           <table className="w-full min-w-[1100px]">
             <caption className="sr-only">Cartera de partners</caption>
             <thead>
-              <tr className="border-b border-white/[0.06] text-left text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">
+              <tr className="border-b border-gravl-text/[0.06] text-left text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">
                 <th scope="col" className="px-4 py-3">Partner</th>
                 <th scope="col" className="px-3 py-3">Segmento · modelo</th>
                 <th scope="col" className="px-3 py-3">Activación</th>
@@ -82,15 +82,15 @@ export default function PortfolioPage() {
               {rows.map((p) => {
                 const pb = playbooks[p.segment];
                 const act = p.eligible ? (p.activeUsers / p.eligible) * 100 : 0;
-                const viewable = ['p_9fitness', 'p_pulso', 'p_nimbus', 'p_fuerza'].includes(p.id);
+                const viewable = ['p_sportclub', 'p_nimbus', 'p_fuerza'].includes(p.id);
                 return (
-                  <tr key={p.id} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+                  <tr key={p.id} className="border-b border-gravl-text/[0.03] hover:bg-gravl-text/[0.02]">
                     <td className="px-4 py-3">
-                      <p className="text-sm font-semibold text-white">{markets[p.market].flag} {p.name}</p>
+                      <p className="text-sm font-semibold text-gravl-text">{markets[p.market].flag} {p.name}</p>
                       <p className="text-[11px] text-gravl-text-muted">Owner: {p.owner}</p>
                     </td>
                     <td className="px-3 py-3 text-xs">
-                      <p className="text-white">{pb.label}</p>
+                      <p className="text-gravl-text">{pb.label}</p>
                       <p className="text-gravl-text-muted">{monetizationLabel[pb.monetization]}</p>
                     </td>
                     <td className="px-3 py-3">
@@ -99,7 +99,7 @@ export default function PortfolioPage() {
                         <p className="tabular-nums mt-1 text-[11px] text-gravl-text-muted">{fmtInt(p.activeUsers)} / {fmtInt(p.eligible)}</p>
                       </div>
                     </td>
-                    <td className="tabular-nums px-3 py-3 text-right text-sm font-bold text-white">{p.mrrUsd ? fmtUsd(p.mrrUsd) : '—'}</td>
+                    <td className="tabular-nums px-3 py-3 text-right text-sm font-bold text-gravl-text">{p.mrrUsd ? fmtUsd(p.mrrUsd) : '—'}</td>
                     <td className="px-3 py-3">
                       {p.health ? (
                         <div className="flex w-24 items-center gap-2">
@@ -108,7 +108,7 @@ export default function PortfolioPage() {
                         </div>
                       ) : <span className="text-xs text-gravl-text-muted">—</span>}
                     </td>
-                    <td className="tabular-nums px-3 py-3 text-right text-xs" style={{ color: p.nrr >= 100 ? '#22C55E' : p.nrr ? '#EF4444' : undefined }}>
+                    <td className="tabular-nums px-3 py-3 text-right text-xs" style={{ color: p.nrr >= 100 ? 'var(--color-gravl-emerald)' : p.nrr ? 'var(--color-gravl-crimson)' : undefined }}>
                       {p.nrr ? `${p.nrr}%` : '—'}
                     </td>
                     <td className="tabular-nums px-3 py-3 text-xs text-gravl-text-secondary">{p.renewsAt}</td>

@@ -1,13 +1,15 @@
 'use client';
 
+import { tint } from '@gravl/ui';
+
 import React from 'react';
 import { useApp, type ToastType } from '@/context/AppContext';
 import { AlertTriangle, CheckCircle2, Info, X } from 'lucide-react';
 
 const styles: Record<ToastType, { icon: typeof Info; color: string }> = {
-  success: { icon: CheckCircle2, color: '#22C55E' },
-  info: { icon: Info, color: '#38BDF8' },
-  warning: { icon: AlertTriangle, color: '#F59E0B' },
+  success: { icon: CheckCircle2, color: 'var(--color-gravl-emerald)' },
+  info: { icon: Info, color: 'var(--color-gravl-cyan)' },
+  warning: { icon: AlertTriangle, color: 'var(--color-gravl-amber)' },
 };
 
 export default function ToastContainer() {
@@ -27,10 +29,10 @@ export default function ToastContainer() {
             key={toast.id}
             role="status"
             className="gravl-glass pointer-events-auto flex w-full max-w-sm animate-slide-up items-start gap-3 px-4 py-3"
-            style={{ borderColor: `${s.color}40` }}
+            style={{ borderColor: `${tint(s.color, 25)}` }}
           >
             <Icon size={18} className="mt-px shrink-0" style={{ color: s.color }} aria-hidden />
-            <p className="flex-1 text-[13px] leading-snug text-white">{toast.message}</p>
+            <p className="flex-1 text-[13px] leading-snug text-gravl-text">{toast.message}</p>
             {toast.action && (
               <button
                 onClick={() => {
@@ -45,7 +47,7 @@ export default function ToastContainer() {
             <button
               onClick={() => removeToast(toast.id)}
               aria-label="Descartar"
-              className="shrink-0 text-gravl-text-muted transition-colors hover:text-white"
+              className="shrink-0 text-gravl-text-muted transition-colors hover:text-gravl-text"
             >
               <X size={14} />
             </button>

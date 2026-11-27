@@ -3,7 +3,7 @@
 import React, { type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@gravl/ui';
+import { GravlIcon, GravlWordmark, ThemeToggle, cn } from '@gravl/ui';
 import { Briefcase, Globe2, LayoutGrid, ShieldAlert } from 'lucide-react';
 
 const nav = [
@@ -20,16 +20,16 @@ export default function ConsoleShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   return (
     <div className="min-h-screen">
-      <div className="flex items-center justify-center gap-2 bg-gravl-cyan/12 px-4 py-1.5 text-[11px] font-semibold text-gravl-cyan">
+      <div className="flex items-center justify-center gap-2 bg-gravl-ink px-4 py-1.5 text-[11px] font-semibold text-white/70">
         <ShieldAlert size={13} aria-hidden />
         Consola interna de GRAVL · acceso con SSO corporativo + MFA · todas las acciones quedan auditadas
       </div>
-      <header className="sticky top-0 z-30 border-b border-white/[0.08] bg-gravl-canvas/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-gravl-text/[0.08] bg-gravl-canvas/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-6 px-4 sm:px-6 xl:px-8">
           <Link href="/portfolio" className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gravl-cyan text-sm font-black text-gravl-canvas">G</span>
-            <span className="text-sm font-black tracking-widest text-white">GRAVL</span>
-            <span className="rounded border border-gravl-cyan/30 bg-gravl-cyan/12 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-gravl-cyan">CONSOLE</span>
+            <GravlIcon size={28} />
+            <span className="text-gravl-text"><GravlWordmark height={13} /></span>
+            <span className="rounded-md bg-gravl-ink px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-gravl-lime dark:bg-gravl-lime dark:text-gravl-ink">Console</span>
           </Link>
           <nav aria-label="Secciones" className="flex items-center gap-1 overflow-x-auto">
             {nav.map((n) => {
@@ -41,10 +41,10 @@ export default function ConsoleShell({ children }: { children: ReactNode }) {
                   aria-current={active ? 'page' : undefined}
                   className={cn(
                     'flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
-                    active ? 'bg-gravl-cyan/15 text-white' : 'text-gravl-text-secondary hover:bg-white/[0.05] hover:text-white',
+                    active ? 'bg-gravl-ink text-white dark:bg-gravl-lime dark:text-gravl-ink' : 'text-gravl-text-secondary hover:bg-gravl-text/[0.05] hover:text-gravl-text',
                   )}
                 >
-                  <n.icon size={14} className={active ? 'text-gravl-cyan' : undefined} aria-hidden />
+                  <n.icon size={14} aria-hidden />
                   {n.label}
                 </Link>
               );
@@ -52,6 +52,7 @@ export default function ConsoleShell({ children }: { children: ReactNode }) {
           </nav>
           <div className="flex-1" />
           <span className="hidden text-xs text-gravl-text-muted sm:inline">staff@gravl.ai</span>
+          <ThemeToggle />
         </div>
       </header>
       <main className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 xl:px-8">{children}</main>

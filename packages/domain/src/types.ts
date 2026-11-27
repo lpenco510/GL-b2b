@@ -65,7 +65,12 @@ export interface GymMachine {
   zone: EquipmentZone;
   quantity: number;
   status: MachineStatus;
+  /** Índice relativo de demanda (0–100) derivado de las series registradas. Legacy de la demo. */
   weeklyUsageRate: number;
+  /** Series registradas en GRAVL en esta máquina, últimos 30 días. Dato real de la app. */
+  loggedSets30d?: number;
+  /** Veces que un socio tocó "¿Máquina ocupada? → cambiar ejercicio" en esta máquina. Dato real de la app. */
+  busySwaps30d?: number;
 }
 
 export interface GymLocation {
@@ -76,6 +81,9 @@ export interface GymLocation {
   city: string;
   country: string;
   qrDeepLink: string;
+  /** Categoría de sede en la red del partner (SportClub: Flex, Plus, Total, Elite). */
+  tier?: string;
+  region?: string;
   liveActiveMembersCount: number;
   /** Capacidad simultánea cómoda del salón (para % de saturación). */
   floorCapacity: number;
@@ -103,6 +111,8 @@ export interface B2BMemberTelemetry {
   consents: ConsentScope[];
   paymentStatus: PaymentStatus;
   cancelIntent?: CancelIntent;
+  /** Plan de membresía del partner (ej. SportClub: flex, plus, total). */
+  planId?: string;
   fullName: string;
   locationId: string;
   department?: string;

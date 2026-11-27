@@ -3,7 +3,7 @@
  * - `demoTenants`: los workspaces que se pueden recorrer en el portal del partner.
  * - `portfolio`: la cartera completa que ve GRAVL en la consola interna.
  */
-import { dealFromPlaybook, type Deal, type MarketCode, type PartnerSegment, type VerticalType } from '@gravl/domain';
+import { dealFromPlaybook, POLICY_ATTENDANCE, POLICY_BREAKAGE, type Deal, type MarketCode, type PartnerSegment, type VerticalType } from '@gravl/domain';
 
 export interface DemoTenant {
   id: string;
@@ -21,19 +21,27 @@ function deal(segment: PartnerSegment, partnerId: string, market: MarketCode, si
 
 export const demoTenants: DemoTenant[] = [
   {
-    id: 'p_9fitness', name: '9 Fitness', shortName: '9F', vertical: 'GYM_CHAIN', subtitle: 'Cadena regional · 3 sedes', accent: '#C6FF00',
-    deal: deal('REGIONAL_CHAIN', 'p_9fitness', 'AR', '2026-03-01T00:00:00Z', {
-      specialTerms: ['Precio congelado en USD por 12 meses', 'Revisión de resultados de retención en el mes 6'],
-    }),
-  },
-  {
-    id: 'p_pulso', name: 'Pulso Fit', shortName: 'PF', vertical: 'GYM_CHAIN', subtitle: 'Low-cost · débito automático', accent: '#F59E0B',
-    deal: deal('HIGH_VOLUME', 'p_pulso', 'AR', '2026-06-01T00:00:00Z', {
-      whiteLabel: true,
+    id: 'p_sportclub', name: 'SportClub', shortName: 'SC', vertical: 'GYM_CHAIN', subtitle: 'Piloto · 12 sedes AMBA', accent: '#d2fe0b',
+    deal: deal('REGIONAL_CHAIN', 'p_sportclub', 'AR', '2026-12-01T00:00:00Z', {
+      whiteLabel: false,
       specialTerms: [
-        'Sin campañas de reactivación a socios durmientes',
-        'Intención de baja derivada al staff de recepción con oferta de congelamiento',
-        'Upsell a GRAVL Pro dentro de la app con 20% para el partner',
+        'Piloto de 90 días en 12 sedes AMBA con grupo de control',
+        'Acceso con el carnet SportClub: el socio vincula su cuenta GRAVL una sola vez',
+        'Revisión de resultados por plan (Flex / Plus / Total) al día 90',
+      ],
+      planPolicies: [
+        {
+          planId: 'flex', label: 'Flex', billing: 'BASE_PLUS_USAGE', monetization: 'ATTENDANCE', contactPolicy: POLICY_ATTENDANCE,
+          rationale: 'Tarifa base + uso: cada visita es ingreso. Conviene reactivar al que dejó de venir.',
+        },
+        {
+          planId: 'plus', label: 'Plus', billing: 'FIXED', monetization: 'BREAKAGE', contactPolicy: POLICY_BREAKAGE,
+          rationale: 'Abono fijo: el que paga y no viene no se toca. Se actúa sobre la intención de baja.',
+        },
+        {
+          planId: 'total', label: 'Total', billing: 'FIXED', monetization: 'BREAKAGE', contactPolicy: POLICY_BREAKAGE,
+          rationale: 'Abono fijo premium: proteger la renovación; la intención de baja la atiende la sede.',
+        },
       ],
     }),
   },
@@ -66,8 +74,8 @@ export interface PortfolioPartner {
 }
 
 export const portfolio: PortfolioPartner[] = [
-  { id: 'p_9fitness', name: '9 Fitness', segment: 'REGIONAL_CHAIN', market: 'AR', activeUsers: 1240, eligible: 4120, locations: 3, mrrUsd: 3100, health: 82, nrr: 118, renewsAt: '2027-03-01', stage: 'ACTIVE', owner: 'Lucía' },
-  { id: 'p_pulso', name: 'Pulso Fit', segment: 'HIGH_VOLUME', market: 'AR', activeUsers: 3900, eligible: 38000, locations: 22, mrrUsd: 3510, health: 71, nrr: 104, renewsAt: '2028-06-01', stage: 'ACTIVE', owner: 'Lucía' },
+  { id: 'p_sportclub', name: 'SportClub (piloto)', segment: 'REGIONAL_CHAIN', market: 'AR', activeUsers: 3600, eligible: 21400, locations: 12, mrrUsd: 0, health: 0, nrr: 0, renewsAt: '2027-03-01', stage: 'PILOT', owner: '—' },
+  { id: 'p_mrfit', name: 'MrFit MX', segment: 'REGIONAL_CHAIN', market: 'MX', activeUsers: 0, eligible: 0, locations: 0, mrrUsd: 0, health: 0, nrr: 0, renewsAt: '—', stage: 'ACTIVE', owner: 'Cliente citado en gravl.ai/empresas' },
   { id: 'p_nimbus', name: 'Nimbus Tech LATAM', segment: 'CORPORATE', market: 'AR', activeUsers: 168, eligible: 262, locations: 0, mrrUsd: 1048, health: 77, nrr: 100, renewsAt: '2027-02-01', stage: 'ACTIVE', owner: 'Martín' },
   { id: 'p_fuerza', name: 'Fuerza Studio', segment: 'COACH', market: 'AR', activeUsers: 24, eligible: 24, locations: 0, mrrUsd: 43, health: 90, nrr: 130, renewsAt: '2026-12-10', stage: 'ACTIVE', owner: 'Self-serve' },
   { id: 'p_crossbox', name: 'Box Andino', segment: 'BOUTIQUE', market: 'CL', activeUsers: 310, eligible: 420, locations: 2, mrrUsd: 930, health: 88, nrr: 112, renewsAt: '2027-05-15', stage: 'PILOT', owner: 'Martín' },

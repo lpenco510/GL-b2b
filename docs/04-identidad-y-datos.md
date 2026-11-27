@@ -22,7 +22,7 @@ GravlAccount (cuenta del socio, la de la app actual)
 
 - Un socio puede estar vinculado a varios partners a la vez (su gimnasio + su empresa + su coach).
 - El `userId` que ve el partner es el de la **Membership**, no el `gravlUserId`. Si dos partners comparan listas, no pueden cruzar identidades.
-- **No todos los socios del gimnasio tienen la app.** El ERP conoce a todos; nosotros solo a los vinculados. La activación (vinculados ÷ socios totales) es la primera métrica comercial. En 9 Fitness: 1.240 / 4.120 = 30%.
+- **No todos los socios del gimnasio tienen la app.** El ERP conoce a todos; nosotros solo a los vinculados. La activación (vinculados ÷ socios totales) es la primera métrica comercial. En el piloto SportClub de la demo: 3.600 / 21.400 = 17% (simulado).
 
 ## Cómo nace el vínculo
 

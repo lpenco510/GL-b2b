@@ -111,7 +111,7 @@ export default function DealDeskPage() {
           return (
             <button key={s} role="radio" aria-checked={active} onClick={() => applySegment(s)}
               className={cn('gravl-card gravl-card-interactive p-4 text-left', active && 'border-gravl-cyan/50')}>
-              <p className={cn('text-sm font-bold', active ? 'text-gravl-cyan' : 'text-white')}>{p.label}</p>
+              <p className={cn('text-sm font-bold', active ? 'text-gravl-cyan' : 'text-gravl-text')}>{p.label}</p>
               <p className="mt-1 text-[11px] text-gravl-text-muted">{monetizationLabel[p.monetization]}</p>
             </button>
           );
@@ -142,7 +142,7 @@ export default function DealDeskPage() {
             </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 border-t border-white/[0.06] pt-5">
+          <div className="grid grid-cols-2 gap-4 border-t border-gravl-text/[0.06] pt-5">
             <Field label={`Precio lista (${pricingModelLabel[pricing.model]})`} htmlFor="dd-price">
               <input id="dd-price" type="number" step={0.1} min={0} className="gravl-input tabular-nums" value={pricing.unitPriceUsd} onChange={(e) => setP('unitPriceUsd', Number(e.target.value))} />
             </Field>
@@ -159,9 +159,9 @@ export default function DealDeskPage() {
             </Field>
           </div>
 
-          <div className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-gravl-text/[0.07] bg-gravl-text/[0.02] p-3">
             <div>
-              <p className="text-xs font-semibold text-white">Reactivar socios que pagan y no vienen</p>
+              <p className="text-xs font-semibold text-gravl-text">Reactivar socios que pagan y no vienen</p>
               <p className="text-[11px] text-gravl-text-muted">{breakage ? 'En low-cost el default es NO: les llena la sala y dispara bajas.' : 'En modelo asistencia es la palanca principal.'}</p>
             </div>
             <Toggle checked={contactDormant} onChange={setContactDormant} label="Reactivar durmientes" />
@@ -175,12 +175,12 @@ export default function DealDeskPage() {
               {[
                 { l: 'Factura mensual', v: fmtUsd(calc.invoice), s: fmtMoney(calc.invoice * m.usdRate, market, { compact: true }) },
                 { l: 'ARR del deal', v: fmtUsd(calc.invoice * 12), s: `${pricing.termMonths} meses` },
-                { l: 'Margen bruto', v: fmtPct(calc.margin * 100), s: 'piso 60%', c: calc.margin >= 0.6 ? '#22C55E' : '#EF4444' },
+                { l: 'Margen bruto', v: fmtPct(calc.margin * 100), s: 'piso 60%', c: calc.margin >= 0.6 ? 'var(--color-gravl-emerald)' : 'var(--color-gravl-crimson)' },
                 { l: 'Precio efectivo', v: fmtUsd(effectiveUnitPrice(pricing)), s: pricingModelLabel[pricing.model] },
               ].map((k) => (
-                <div key={k.l} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+                <div key={k.l} className="rounded-xl border border-gravl-text/[0.07] bg-gravl-text/[0.02] p-3">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">{k.l}</p>
-                  <p className="tabular-nums mt-1 font-mono text-xl font-black" style={{ color: k.c ?? '#F8FAFC' }}>{k.v}</p>
+                  <p className="mt-1 gravl-num text-[28px]" style={{ color: k.c ?? 'var(--color-gravl-text)' }}>{k.v}</p>
                   <p className="text-[11px] text-gravl-text-muted">{k.s}</p>
                 </div>
               ))}
@@ -197,18 +197,18 @@ export default function DealDeskPage() {
                   <ProgressBar value={calc.roi.retainedRevenue + calc.roi.revShare} max={Math.max(calc.roi.retainedRevenue + calc.roi.revShare, calc.roi.annualCost) || 1} color="var(--color-gravl-emerald)" className="h-2.5" />
                 </div>
                 <div>
-                  <div className="mb-1.5 flex justify-between text-xs"><span className="text-gravl-text-secondary">Inversión anual en GRAVL</span><span className="tabular-nums font-bold text-white">{fmtUsd(calc.roi.annualCost)}</span></div>
-                  <ProgressBar value={calc.roi.annualCost} max={Math.max(calc.roi.retainedRevenue + calc.roi.revShare, calc.roi.annualCost) || 1} color="#64748B" className="h-2.5" />
+                  <div className="mb-1.5 flex justify-between text-xs"><span className="text-gravl-text-secondary">Inversión anual en GRAVL</span><span className="tabular-nums font-bold text-gravl-text">{fmtUsd(calc.roi.annualCost)}</span></div>
+                  <ProgressBar value={calc.roi.annualCost} max={Math.max(calc.roi.retainedRevenue + calc.roi.revShare, calc.roi.annualCost) || 1} color="var(--color-gravl-text-muted)" className="h-2.5" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-xl border border-gravl-volt/20 bg-gravl-volt/[0.05] p-3">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">ROI</p>
-                  <p className="tabular-nums font-mono text-2xl font-black text-gravl-volt">{calc.roi.multiple.toFixed(1)}x</p>
+                  <p className="gravl-num text-[34px] text-gravl-volt">{calc.roi.multiple.toFixed(1)}x</p>
                 </div>
-                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+                <div className="rounded-xl border border-gravl-text/[0.07] bg-gravl-text/[0.02] p-3">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">Repago</p>
-                  <p className="tabular-nums font-mono text-2xl font-black text-white">{Number.isFinite(calc.roi.paybackMonths) ? calc.roi.paybackMonths.toFixed(1) : '—'}<span className="ml-1 text-xs text-gravl-text-muted">m</span></p>
+                  <p className="gravl-num text-[34px] text-gravl-text">{Number.isFinite(calc.roi.paybackMonths) ? calc.roi.paybackMonths.toFixed(1) : '—'}<span className="ml-1 text-xs text-gravl-text-muted">m</span></p>
                 </div>
               </div>
             </div>

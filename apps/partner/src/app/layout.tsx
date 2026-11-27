@@ -1,20 +1,14 @@
 import type { Metadata, Viewport } from 'next';
-import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
+import { Barlow_Condensed, Inter_Tight } from 'next/font/google';
+import { InlineScript, themeInitScript } from '@gravl/ui';
+
 import './globals.css';
 import { AppProvider } from '@/context/AppContext';
 import ClientLayout from '@/components/layout/ClientLayout';
 
-const plusJakarta = Plus_Jakarta_Sans({
-  variable: '--font-plus-jakarta',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: '--font-jetbrains',
-  subsets: ['latin'],
-  weight: ['400', '600', '700'],
-});
+// Tipografías de gravl.ai: Inter Tight (UI) + Barlow Condensed (cifras y titulares).
+const interTight = Inter_Tight({ variable: '--font-inter-tight', subsets: ['latin'], weight: ['400', '500', '600', '700'] });
+const barlow = Barlow_Condensed({ variable: '--font-barlow', subsets: ['latin'], weight: ['600', '700'] });
 
 export const metadata: Metadata = {
   title: {
@@ -25,13 +19,15 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#080A0E',
-  colorScheme: 'dark',
+  themeColor: '#ffffff',
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="es" className={`${plusJakarta.variable} ${jetbrainsMono.variable} h-full antialiased`}>
+    <html lang="es" data-theme="light" suppressHydrationWarning className={`${interTight.variable} ${barlow.variable} h-full antialiased`}>
+      <head>
+        <InlineScript html={themeInitScript} />
+      </head>
       <body className="min-h-full">
         <AppProvider>
           <ClientLayout>{children}</ClientLayout>

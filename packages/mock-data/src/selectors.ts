@@ -4,8 +4,9 @@
 
 import {
   daysSince,
+  feesAtRisk,
   isDormant,
-  revenueAtRiskUsd,
+  policyFor,
   type B2BMemberTelemetry,
   type Deal,
   type LocationScope,
@@ -28,7 +29,12 @@ export const isNewJoinerAtRisk = (m: B2BMemberTelemetry) =>
 export function inSegment(m: B2BMemberTelemetry, segment: MemberSegment, deal?: Deal) {
   if (segment === 'ALL') return true;
   if (segment === 'CANCEL_INTENT') return !!m.cancelIntent;
-  if (segment === 'DORMANT') return !!deal && !m.cancelIntent && isDormant(m, deal.contactPolicy);
+  if (segment === 'DORMANT') {
+    if (!deal || m.cancelIntent) return false;
+    const { contactPolicy } = policyFor(deal, m.planId);
+    // "Durmiente protegido": no viene y su plan prohíbe reactivarlo.
+    return !contactPolicy.contactDormantPayers && isDormant(m, contactPolicy);
+  }
   if (segment === 'NEW_JOINERS') return isNewJoinerAtRisk(m);
   return m.status === segment;
 }
@@ -43,8 +49,8 @@ export function scopeStats(scope: LocationScope, deal?: Deal) {
   const capacity = locs.reduce((acc, l) => acc + l.floorCapacity, 0);
   const activeThisWeek = list.filter((m) => m.workoutsThisWeek > 0).length;
 
-  // Ingreso en riesgo: la definición depende de cómo gana plata el partner (ver @gravl/domain/engagement).
-  const revenueAtRiskUsdValue = revenueAtRiskUsd(list, deal?.monetization ?? 'ATTENDANCE', organization.avgMonthlyFeeUsd);
+  // Cuotas en riesgo: la definición depende del modelo de CADA plan (ver @gravl/domain/engagement).
+  const feesAtRiskValue = deal ? feesAtRisk(list, deal) : 0;
 
   return {
     total: list.length,
@@ -57,7 +63,8 @@ export function scopeStats(scope: LocationScope, deal?: Deal) {
     capacity,
     occupancyPct: capacity ? Math.round((liveNow / capacity) * 100) : 0,
     weeklyActiveRate: list.length ? Math.round((activeThisWeek / list.length) * 100) : 0,
-    revenueAtRiskUsd: revenueAtRiskUsdValue,
+    feesAtRisk: feesAtRiskValue,
+    activationPct: Math.round((list.length / Math.max(1, organization.totalGymMembers * (scope === 'all' ? 1 : (locations.find((l) => l.id === scope)?.floorCapacity ?? 0) / locations.reduce((a, l) => a + l.floorCapacity, 0)))) * 100),
     cancelIntent: list.filter((m) => m.cancelIntent).length,
     locationsCount: locs.length,
   };

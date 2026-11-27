@@ -9,6 +9,21 @@ export const COST_PER_ACTIVE_USER_USD = 0.35;
 /** Margen bruto mínimo aceptable. Por debajo, el deal no se firma. */
 export const MIN_GROSS_MARGIN = 0.6;
 
+/**
+ * Fee de coach por tramos según clientes activos. El precio sube con el negocio del coach,
+ * no con funciones bloqueadas. Montos a definir: acá solo la estructura y un multiplicador.
+ */
+export const COACH_TIERS = [
+  { upTo: 15, label: 'Inicial', multiplier: 1 },
+  { upTo: 40, label: 'Pro', multiplier: 2 },
+  { upTo: 100, label: 'Studio', multiplier: 3.5 },
+  { upTo: Infinity, label: 'Equipo', multiplier: 6 },
+] as const;
+
+export function coachTier(clients: number) {
+  return COACH_TIERS.find((t) => clients <= t.upTo) ?? COACH_TIERS[COACH_TIERS.length - 1];
+}
+
 export interface Usage {
   activeUsers: number;
   eligible: number;
@@ -30,7 +45,7 @@ export function monthlyInvoiceUsd(p: Pricing, u: Usage): number {
     case 'PER_ACTIVE_USER': base = unit * u.activeUsers; break;
     case 'PER_ELIGIBLE': base = unit * u.eligible; break;
     case 'PER_LOCATION': base = unit * u.locations; break;
-    case 'PER_COACH': base = unit + Math.max(0, u.coachClients - 15) * 1.5; break;
+    case 'PER_COACH': base = unit * coachTier(u.coachClients).multiplier; break;
   }
   return Math.max(p.minimumMonthlyUsd, base);
 }

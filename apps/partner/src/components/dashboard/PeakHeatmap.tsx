@@ -2,25 +2,24 @@
 
 import React, { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { CURRENT_HOUR, DAY_KEYS, DAY_LABELS, TODAY_KEY, peakHoursForScope, scopeStats, type DayKey } from '@gravl/mock-data';
+import { CURRENT_HOUR, DAY_KEYS, DAY_LABELS, TODAY_KEY, peakHoursForScope, type DayKey } from '@gravl/mock-data';
 import { cn } from '@gravl/ui';
 import { Badge, Card, CardHeader } from '@gravl/ui';
 import { Clock } from 'lucide-react';
 
 // Escala de 5 pasos, de "tranquilo" a "pico". Los textos mantienen contraste AA.
 const SCALE = [
-  { max: 0.25, bg: 'rgba(255,255,255,0.035)', fg: '#64748B' },
-  { max: 0.45, bg: 'rgba(34,197,94,0.18)', fg: '#94A3B8' },
-  { max: 0.65, bg: 'rgba(34,197,94,0.38)', fg: '#E2E8F0' },
-  { max: 0.85, bg: 'rgba(198,255,0,0.5)', fg: '#F8FAFC' },
-  { max: Infinity, bg: 'rgba(198,255,0,0.92)', fg: '#080A0E' },
-];
+  { max: 0.25, bg: 'color-mix(in srgb, var(--g-fg) 4%, transparent)', fg: 'var(--g-fg-3)' },
+  { max: 0.45, bg: 'color-mix(in srgb, var(--g-fg) 9%, transparent)', fg: 'var(--g-fg-2)' },
+  { max: 0.65, bg: 'color-mix(in srgb, #d2fe0b 38%, transparent)', fg: 'var(--g-fg)' },
+  { max: 0.85, bg: 'color-mix(in srgb, #d2fe0b 72%, transparent)', fg: '#080e18' },
+  { max: Infinity, bg: '#d2fe0b', fg: '#080e18' },
+]
 const cellStyle = (ratio: number) => SCALE.find((s) => ratio <= s.max) ?? SCALE[SCALE.length - 1];
 
 export default function PeakHeatmap() {
   const { selectedLocationId } = useApp();
   const rows = useMemo(() => peakHoursForScope(selectedLocationId), [selectedLocationId]);
-  const { capacity } = scopeStats(selectedLocationId);
   const [hover, setHover] = useState<{ hour: string; day: DayKey; value: number } | null>(null);
 
   const peak = useMemo(() => {
@@ -29,15 +28,14 @@ export default function PeakHeatmap() {
     return best;
   }, [rows]);
 
-  const peakPct = Math.round((peak.value / capacity) * 100);
 
   return (
     <Card className="flex h-full flex-col p-5 sm:p-6">
       <CardHeader
         icon={Clock}
-        title="Horarios pico y ocupación"
-        subtitle="Socios en sala por franja. Usalo para staffing de coaches de piso y rotación de racks."
-        action={<Badge tone={peakPct >= 85 ? 'crimson' : 'amber'}>Pico: {DAY_LABELS[peak.day]} {peak.hour} h · {peakPct}%</Badge>}
+        title="Cuándo entrenan tus socios"
+        subtitle="Inicios de entrenamiento registrados en GRAVL por franja. Sirve para staffing de profes de sala y para sugerir horarios valle."
+        action={<Badge tone="ink">Pico: {DAY_LABELS[peak.day]} {peak.hour} h</Badge>}
       />
 
       <div className="mt-5 overflow-x-auto">
@@ -75,10 +73,10 @@ export default function PeakHeatmap() {
                       <div
                         onMouseEnter={() => setHover({ hour: row.hour, day: d, value })}
                         onMouseLeave={() => setHover(null)}
-                        title={`${DAY_LABELS[d]} ${row.hour} h: ${value} socios (${Math.round((value / capacity) * 100)}% de capacidad)`}
+                        title={`${DAY_LABELS[d]} ${row.hour} h: ${value} entrenamientos iniciados`}
                         className={cn(
                           'tabular-nums flex h-7 items-center justify-center rounded-md text-[10px] font-bold transition-transform hover:scale-105',
-                          isNow && 'ring-2 ring-white ring-offset-1 ring-offset-gravl-canvas',
+                          isNow && 'ring-2 ring-gravl-text ring-offset-1 ring-offset-gravl-card',
                         )}
                         style={{ background: s.bg, color: s.fg }}
                       >
@@ -93,17 +91,17 @@ export default function PeakHeatmap() {
         </table>
       </div>
 
-      <div className="mt-auto flex flex-col gap-3 border-t border-white/[0.06] pt-4 text-xs sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-auto flex flex-col gap-3 border-t border-gravl-text/[0.06] pt-4 text-xs sm:flex-row sm:items-center sm:justify-between">
         <p className="text-gravl-text-muted" aria-live="polite">
           {hover ? (
             <>
-              <span className="font-semibold text-white">
+              <span className="font-semibold text-gravl-text">
                 {DAY_LABELS[hover.day]} {hover.hour} h
               </span>{' '}
-              · {hover.value} socios · {Math.round((hover.value / capacity) * 100)}% de capacidad
+              · {hover.value} entrenamientos iniciados
             </>
           ) : (
-            <>Color relativo al pico de la semana. Recuadro blanco = ahora ({DAY_LABELS[TODAY_KEY]} {CURRENT_HOUR} h). Capacidad cómoda: {capacity} socios.</>
+            <>Color relativo al pico de la semana. Recuadro blanco = ahora ({DAY_LABELS[TODAY_KEY]} {CURRENT_HOUR} h). Muestra: socios con GRAVL.</>
           )}
         </p>
         <div className="flex items-center gap-1.5" aria-hidden>

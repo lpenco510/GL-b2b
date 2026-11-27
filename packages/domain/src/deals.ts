@@ -58,6 +58,21 @@ export interface Pricing {
   discountPct: number;
 }
 
+/**
+ * Política por plan de membresía. En una misma cadena conviven modelos distintos:
+ * en SportClub el Flex cobra base + uso (cada visita es ingreso → conviene reactivar),
+ * mientras Plus y Total son abonos fijos (el que paga y no viene NO se toca).
+ */
+export interface PlanPolicy {
+  planId: string;
+  label: string;
+  billing: 'FIXED' | 'BASE_PLUS_USAGE';
+  monetization: MonetizationModel;
+  contactPolicy: ContactPolicy;
+  /** Por qué esta política, en una línea. Se muestra al partner. */
+  rationale: string;
+}
+
 export interface Deal {
   id: string;
   partnerId: string;
@@ -72,6 +87,16 @@ export interface Deal {
   renewsAt: string;
   /** Lo que se acordó y no entra en un campo: se muestra tal cual al partner. */
   specialTerms: string[];
+  /** Si existe, pisa monetization/contactPolicy según el plan del socio. */
+  planPolicies?: PlanPolicy[];
+}
+
+/** Política efectiva para un socio: la de su plan si el acuerdo la define, si no la general. */
+export function policyFor(deal: Deal, planId?: string): { monetization: MonetizationModel; contactPolicy: ContactPolicy; plan?: PlanPolicy } {
+  const plan = planId ? deal.planPolicies?.find((p) => p.planId === planId) : undefined;
+  return plan
+    ? { monetization: plan.monetization, contactPolicy: plan.contactPolicy, plan }
+    : { monetization: deal.monetization, contactPolicy: deal.contactPolicy };
 }
 
 export interface Playbook {
@@ -190,3 +215,6 @@ export function dealFromPlaybook(segment: PartnerSegment, partnerId: string, mar
     specialTerms: [],
   };
 }
+
+export const POLICY_ATTENDANCE = policyAttendance;
+export const POLICY_BREAKAGE = policyBreakage;

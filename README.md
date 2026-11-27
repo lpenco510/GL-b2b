@@ -10,11 +10,13 @@ packages/
   domain/      Reglas de negocio puras + tests
   ui/          Design system (tokens + componentes)
   mock-data/   Datos de demo (se reemplaza por la API)
-docs/          Lógica de negocio, arquitectura, mercados, identidad, roadmap, design system
+db/           Esquema PostgreSQL propuesto para el Partner API (con aislamiento por partner)
+docs/          Quién es quién, lógica de negocio, arquitectura, mercados, identidad, roadmap, design system
 ```
 
 ## Empezá por acá
 
+0. [`docs/00-quien-es-quien.md`](docs/00-quien-es-quien.md): los perfiles explicados en una página.
 1. [`docs/01-negocio.md`](docs/01-negocio.md): qué vendemos, a quién, cómo cobramos y qué no hacemos nunca.
 2. [`docs/02-arquitectura.md`](docs/02-arquitectura.md): por qué tres apps separadas y cómo se aíslan los datos.
 3. [`docs/03-mercados.md`](docs/03-mercados.md): moneda, cobro, factura y ley de datos por país.
@@ -36,11 +38,14 @@ npm run dev
 
 Abrí **http://localhost:3000** (portal) y **http://localhost:3001** (consola).
 
-Recorrido sugerido:
-- En el portal, abrí el selector de workspace (arriba a la izquierda) y alterná entre **9 Fitness** (modelo asistencia) y **Pulso Fit** (low-cost, débito automático). El copiloto, los segmentos de Retención y la política de contacto cambian según el acuerdo.
-- *Acuerdo & Activación* muestra lo que se negoció con el partner.
-- En la consola, *Deal Desk* → elegí "Alto volumen" y México para cotizar a MegaGym MX.
-- ⌘K / Ctrl+K busca socios, módulos y acciones.
+Recorrido sugerido (el ejemplo es **SportClub**, con un piloto de 12 sedes; todos los números son simulados):
+- **Command Center:** qué hacer hoy. Las acciones respetan el plan de cada socio: Flex se reactiva, Plus y Total no se molestan.
+- **Socios:** filtrá por "Intención de baja" o "Protegidos" y abrí un socio para ver su plan, su vínculo con la cuenta GRAVL y por qué se lo puede (o no) contactar.
+- **Equipamiento:** solo datos que la app registra, como series por máquina y las veces que un socio encontró una máquina ocupada.
+- **Acuerdo & Activación:** lo que se negoció, con la política por plan.
+- Arriba a la derecha está el botón de **modo claro/oscuro**; ⌘K / Ctrl+K busca socios, módulos y acciones.
+- Arriba a la izquierda cambiás de tipo de cliente: SportClub (cadena), Nimbus (empresa), Fuerza Studio (coach).
+- **Consola** (puerto 3001): portafolio, Deal Desk y mercados, como los ve GRAVL por dentro.
 
 ## Comandos
 

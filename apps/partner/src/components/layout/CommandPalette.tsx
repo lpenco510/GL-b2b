@@ -116,7 +116,7 @@ export default function CommandPalette() {
     <div className="fixed inset-0 z-[95] flex items-start justify-center px-4 pt-[12vh]">
       <div className="absolute inset-0 animate-fade-in bg-black/60 backdrop-blur-sm" onClick={close} aria-hidden />
       <div role="dialog" aria-modal="true" aria-label="Paleta de comandos" className="gravl-glass relative w-full max-w-xl animate-slide-up overflow-hidden">
-        <div className="flex items-center gap-3 border-b border-white/[0.08] px-4">
+        <div className="flex items-center gap-3 border-b border-gravl-text/[0.08] px-4">
           <Search size={16} className="text-gravl-text-muted" aria-hidden />
           <input
             ref={inputRef}
@@ -145,7 +145,7 @@ export default function CommandPalette() {
             aria-expanded="true"
             aria-controls="cmdk-list"
             aria-activedescendant={entries[cursor] ? `cmdk-${entries[cursor].id}` : undefined}
-            className="h-14 flex-1 bg-transparent text-sm text-white placeholder:text-gravl-text-muted focus:outline-none"
+            className="h-14 flex-1 bg-transparent text-sm text-gravl-text placeholder:text-gravl-text-muted focus:outline-none"
           />
           <span className="kbd">Esc</span>
         </div>
@@ -173,7 +173,7 @@ export default function CommandPalette() {
                   onClick={() => runAt(i)}
                   className={cn(
                     'flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm',
-                    i === cursor ? 'bg-white/[0.07] text-white' : 'text-gravl-text-secondary',
+                    i === cursor ? 'bg-gravl-text/[0.07] text-gravl-text' : 'text-gravl-text-secondary',
                   )}
                 >
                   {e.avatar ? (

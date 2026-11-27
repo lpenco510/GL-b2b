@@ -16,7 +16,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen text-gravl-text">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-lg focus:bg-gravl-volt focus:px-3 focus:py-2 focus:text-sm focus:font-bold focus:text-gravl-canvas"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-lg focus:bg-gravl-lime focus:px-3 focus:py-2 focus:text-sm focus:font-bold focus:text-gravl-ink"
       >
         Saltar al contenido
       </a>
@@ -24,7 +24,7 @@ export default function ClientLayout({ children }: { children: ReactNode }) {
       <div
         className={cn(
           'flex min-w-0 flex-col transition-[padding] duration-300',
-          sidebarCollapsed ? 'lg:pl-[76px]' : 'lg:pl-[260px]',
+          sidebarCollapsed ? 'lg:pl-[76px]' : 'lg:pl-[264px]',
           mobilePreviewOpen && '2xl:pr-[400px]',
         )}
       >

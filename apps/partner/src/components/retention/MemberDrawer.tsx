@@ -12,7 +12,7 @@ import type { B2BMemberTelemetry } from '@gravl/domain';
 import NudgeComposer from './NudgeComposer';
 import { StatusBadge, riskColor } from './memberUi';
 import { Check, Flame, Link2, Lock, PhoneCall, Send, ShieldCheck, X } from 'lucide-react';
-import { NEVER_SHARED, cancelIntentLabel, consentLabel, nudgeDecision, type ConsentScope } from '@gravl/domain';
+import { NEVER_SHARED, cancelIntentLabel, consentLabel, nudgeDecisionFor, policyFor, type ConsentScope } from '@gravl/domain';
 import { useDeal } from '@/components/layout/useTenant';
 
 export default function MemberDrawer({ member, onClose }: { member: B2BMemberTelemetry | null; onClose: () => void }) {
@@ -25,7 +25,8 @@ export default function MemberDrawer({ member, onClose }: { member: B2BMemberTel
   const history = m ? memberWeeklyHistory(m) : [];
   const maxH = Math.max(m?.weeklyTarget ?? 4, ...history);
   const nudged = m ? nudgedAt[m.userId] : undefined;
-  const decision = m ? nudgeDecision(m, deal.contactPolicy, { lastNudgedAt: nudged }) : undefined;
+  const decision = m ? nudgeDecisionFor(m, deal, { lastNudgedAt: nudged }) : undefined;
+  const plan = m ? policyFor(deal, m.planId).plan : undefined;
   const staff = decision?.channel === 'STAFF';
 
   return (
@@ -85,6 +86,12 @@ export default function MemberDrawer({ member, onClose }: { member: B2BMemberTel
             )}
           </div>
 
+          {plan && (
+            <p className="rounded-xl bg-gravl-text/[0.04] px-3 py-2.5 text-[13px] text-gravl-text-secondary">
+              <span className="font-semibold text-gravl-text">Plan {plan.label}.</span> {plan.rationale}
+            </p>
+          )}
+
           {m.cancelIntent && (
             <p className="rounded-xl border border-pink-400/25 bg-pink-400/[0.06] px-3 py-2.5 text-xs text-pink-200">
               <span className="font-bold">Intención de baja:</span> {cancelIntentLabel[m.cancelIntent]}.{' '}
@@ -95,7 +102,7 @@ export default function MemberDrawer({ member, onClose }: { member: B2BMemberTel
           <section aria-label="Riesgo de baja">
             <div className="mb-2 flex items-end justify-between">
               <p className="text-xs font-bold uppercase tracking-wider text-gravl-text-muted">Riesgo de baja (30 días)</p>
-              <p className="tabular-nums text-2xl font-black" style={{ color: riskColor(m.churnRisk) }}>
+              <p className="gravl-num text-[34px]" style={{ color: riskColor(m.churnRisk) }}>
                 {m.churnRisk}%
               </p>
             </div>
@@ -126,9 +133,9 @@ export default function MemberDrawer({ member, onClose }: { member: B2BMemberTel
               { l: 'Δ 30 días', v: `${m.strengthScoreDelta30d >= 0 ? '+' : ''}${m.strengthScoreDelta30d}` },
               { l: 'Readiness', v: `${m.readinessScore ?? '—'}%` },
             ].map((s) => (
-              <div key={s.l} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+              <div key={s.l} className="rounded-xl border border-gravl-text/[0.06] bg-gravl-text/[0.02] p-3">
                 <p className="text-[10px] font-semibold text-gravl-text-muted">{s.l}</p>
-                <p className="tabular-nums mt-1 text-base font-bold text-white">{s.v}</p>
+                <p className="tabular-nums mt-1 text-base font-bold text-gravl-text">{s.v}</p>
               </div>
             ))}
           </section>
@@ -143,7 +150,7 @@ export default function MemberDrawer({ member, onClose }: { member: B2BMemberTel
                     className="w-full rounded-md"
                     style={{
                       height: `${Math.max(4, (v / maxH) * 64)}px`,
-                      background: v >= m.weeklyTarget ? '#C6FF00' : v === 0 ? 'rgba(239,68,68,0.5)' : 'rgba(56,189,248,0.55)',
+                      background: v >= m.weeklyTarget ? 'var(--color-gravl-volt)' : v === 0 ? 'rgba(239,68,68,0.5)' : 'rgba(56,189,248,0.55)',
                     }}
                   />
                   <span className="text-[9px] text-gravl-text-muted">{i === 7 ? 'Hoy' : `S-${7 - i}`}</span>
@@ -152,13 +159,13 @@ export default function MemberDrawer({ member, onClose }: { member: B2BMemberTel
             </div>
           </section>
 
-          <section aria-label="Vínculo con la app" className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
+          <section aria-label="Vínculo con la app" className="rounded-xl border border-gravl-text/[0.07] bg-gravl-text/[0.02] p-4">
             <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gravl-text-muted">
               <Link2 size={13} aria-hidden /> Vínculo con la app GRAVL
             </p>
             <dl className="grid grid-cols-2 gap-2 text-[11px]">
-              <div><dt className="text-gravl-text-muted">Cuenta GRAVL</dt><dd className="font-mono text-white">{m.gravlUserId}</dd></div>
-              <div><dt className="text-gravl-text-muted">ID en tu ERP</dt><dd className="font-mono text-white">{m.externalMemberId}</dd></div>
+              <div><dt className="text-gravl-text-muted">Cuenta GRAVL</dt><dd className="font-mono text-gravl-text">{m.gravlUserId}</dd></div>
+              <div><dt className="text-gravl-text-muted">ID en tu ERP</dt><dd className="font-mono text-gravl-text">{m.externalMemberId}</dd></div>
             </dl>
             <ul className="mt-3 space-y-1">
               {(Object.keys(consentLabel) as ConsentScope[]).map((c) => {

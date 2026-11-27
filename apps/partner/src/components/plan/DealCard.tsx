@@ -4,7 +4,7 @@ import React from 'react';
 import { useTenant } from '@/components/layout/useTenant';
 import { organization } from '@gravl/mock-data';
 import {
-  effectiveUnitPrice, fmtDateLong, fmtInt, fmtMoney, fmtPct, fmtUsd, markets, monetizationLabel, northStarLabel, playbooks, pricingModelLabel,
+  fmtDateLong, fmtInt, fmtPct, markets, monetizationLabel, northStarLabel, playbooks,
 } from '@gravl/domain';
 import { Badge, Card, CardHeader } from '@gravl/ui';
 import { Check, FileSignature, Lock, MessageSquareOff } from 'lucide-react';
@@ -15,7 +15,6 @@ export default function DealCard() {
   const { deal } = tenant;
   const pb = playbooks[deal.segment];
   const market = markets[deal.market];
-  const unit = effectiveUnitPrice(deal.pricing);
   const p = deal.contactPolicy;
   const activation = (organization.activeSeats / organization.totalGymMembers) * 100;
 
@@ -33,10 +32,10 @@ export default function DealCard() {
         }
       />
 
-      <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
+      <div className={`mt-5 grid grid-cols-1 gap-4 ${deal.planPolicies ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}>
+        <div className="rounded-xl border border-gravl-text/[0.07] bg-gravl-text/[0.02] p-4">
           <p className="text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">Qué optimizamos</p>
-          <p className="mt-1.5 text-base font-bold text-white">{northStarLabel[deal.northStar]}</p>
+          <p className="mt-1.5 text-base font-bold text-gravl-text">{northStarLabel[deal.northStar]}</p>
           <p className="mt-1 text-xs text-gravl-text-secondary">Modelo de negocio: {monetizationLabel[deal.monetization].toLowerCase()}.</p>
           <ul className="mt-3 space-y-1.5">
             {pb.whatTheyBuy.map((w) => (
@@ -47,28 +46,24 @@ export default function DealCard() {
           </ul>
         </div>
 
-        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">Precio</p>
-          <p className="tabular-nums mt-1.5 text-base font-bold text-white">
-            {fmtUsd(unit)} <span className="text-xs font-medium text-gravl-text-secondary">{pricingModelLabel[deal.pricing.model]}</span>
-          </p>
-          <dl className="mt-3 space-y-1.5 text-xs">
-            <div className="flex justify-between"><dt className="text-gravl-text-muted">Mínimo mensual</dt><dd className="tabular-nums text-white">{fmtUsd(deal.pricing.minimumMonthlyUsd)}</dd></div>
+        <div className="rounded-xl border border-gravl-line p-4">
+          <p className="gravl-label">Cómo se cobra</p>
+          <p className="mt-1.5 text-base font-semibold text-gravl-text">Por socio que usa la app, cada mes</p>
+          <p className="mt-1 text-[13px] text-gravl-text-secondary">El socio que no activa GRAVL no se paga. Monto, mínimo y plazo: a definir en la negociación.</p>
+          <dl className="mt-3 space-y-1.5 text-[13px]">
+            <div className="flex justify-between gap-3"><dt className="text-gravl-text-muted">Facturación</dt><dd className="text-right text-gravl-text">{market.quoteCurrency === 'USD' ? `Cotiza en USD, factura en ${market.currency}` : market.currency} · {market.fiscalInvoice}</dd></div>
             {deal.pricing.partnerRevSharePct > 0 && (
-              <div className="flex justify-between"><dt className="text-gravl-text-muted">Revenue share de Pro para vos</dt><dd className="tabular-nums text-gravl-volt">{deal.pricing.partnerRevSharePct}%</dd></div>
+              <div className="flex justify-between"><dt className="text-gravl-text-muted">Revenue share de Pro</dt><dd className="text-gravl-text">Sí</dd></div>
             )}
-            <div className="flex justify-between"><dt className="text-gravl-text-muted">Plazo</dt><dd className="text-white">{deal.pricing.termMonths} meses</dd></div>
-            <div className="flex justify-between"><dt className="text-gravl-text-muted">Facturación</dt><dd className="text-right text-white">{market.quoteCurrency === 'USD' ? `USD → ${market.currency}` : market.currency} · {market.fiscalInvoice}</dd></div>
-            <div className="flex justify-between"><dt className="text-gravl-text-muted">Equivale hoy a</dt><dd className="tabular-nums text-white">{fmtMoney(unit * market.usdRate, deal.market)} / unidad</dd></div>
           </dl>
           {tenant.vertical === 'GYM_CHAIN' && (
-            <p className="mt-3 border-t border-white/[0.06] pt-3 text-[11px] text-gravl-text-muted">
-              Pagás por quien usa la app: {fmtInt(organization.activeSeats)} de {fmtInt(organization.totalGymMembers)} socios ({fmtPct(activation)} de activación).
+            <p className="mt-3 border-t border-gravl-line pt-3 text-xs text-gravl-text-muted">
+              Hoy: {fmtInt(organization.activeSeats)} de {fmtInt(organization.totalGymMembers)} socios usan GRAVL ({fmtPct(activation)} de activación).
             </p>
           )}
         </div>
-
-        <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
+{!deal.planPolicies && (
+        <div className="rounded-xl border border-gravl-text/[0.07] bg-gravl-text/[0.02] p-4">
           <p className="text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">Política de contacto</p>
           <ul className="mt-2 space-y-2 text-xs text-gravl-text-secondary">
             <li className="flex items-start gap-2">
@@ -83,7 +78,30 @@ export default function DealCard() {
             <li className="flex items-start gap-2"><Lock size={13} className="mt-px shrink-0 text-gravl-text-muted" aria-hidden /> Solo socios que aceptaron mensajes de tu marca.</li>
           </ul>
         </div>
+)}
       </div>
+
+      {deal.planPolicies && (
+        <div className="mt-5 overflow-hidden rounded-[var(--radius-gravl)] border border-gravl-line">
+          <p className="gravl-label border-b border-gravl-line bg-gravl-text/[0.03] px-4 py-2.5">Política por plan de membresía</p>
+          <div className="grid grid-cols-1 divide-y divide-gravl-line md:grid-cols-3 md:divide-x md:divide-y-0">
+            {deal.planPolicies.map((pp) => (
+              <div key={pp.planId} className="p-4">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="gravl-num text-[28px] uppercase text-gravl-text">{pp.label}</p>
+                  <Badge tone={pp.monetization === 'ATTENDANCE' ? 'volt' : 'neutral'}>
+                    {pp.billing === 'BASE_PLUS_USAGE' ? 'Base + uso' : 'Abono fijo'}
+                  </Badge>
+                </div>
+                <p className="mt-2 text-[13px] leading-relaxed text-gravl-text-secondary">{pp.rationale}</p>
+                <p className="mt-3 text-xs font-semibold text-gravl-text">
+                  {pp.contactPolicy.contactDormantPayers ? '✓ Se reactiva a quien deja de venir' : '✕ No se contacta a quien paga y no viene'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {deal.specialTerms.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">

@@ -1,5 +1,39 @@
 # 02 · Arquitectura
 
+## Hoy: ¿qué base de datos usa la demo?
+
+**Ninguna.** La demo corre con datos simulados generados en memoria (`packages/mock-data`). Por eso nunca pedí accesos: no hay nada conectado a GRAVL, a SportClub ni a ninguna base real. Es deliberado: se puede mostrar en una reunión sin riesgo y sin depender de nadie.
+
+## Lo que ya existe en GRAVL (y cambia el plan)
+
+En gravl.ai/developers GRAVL ya publica una **API REST** (`api.gravl.ai/api/v1`):
+
+- Autenticación con **OAuth 2.0**: el usuario concede *scopes* a cada app.
+- Hoy es **solo lectura**: entrenamientos, récords, medidas y estadísticas.
+- *"No existe ningún scope que dé acceso a los datos de otra persona."*
+- Hay además un servidor **MCP**.
+
+Esto define la arquitectura B2B: **el portal del partner es, técnicamente, una app OAuth más.** No tocamos la base del core de GRAVL. Cuando un socio vincula su cuenta con SportClub, concede scopes. El Partner API lee con esos tokens y guarda solo lo que es del negocio B2B.
+
+Lo que hay que pedirle al equipo de GRAVL:
+
+1. **Scopes B2B nuevos**, por ejemplo `partner:activity` y `partner:messaging`. Que el socio los conceda al vincularse con su gimnasio.
+2. **Lectura por lote:** un token "de partner" que lea los socios vinculados, siempre limitado a quienes concedieron el scope.
+3. **Webhooks:** entrenamiento terminado, "máquina ocupada → cambiar ejercicio", récord. Así no hace falta consultar a cada rato.
+4. **Escritura acotada:** enviar un push con la marca del partner y asignar una rutina. Son las dos únicas acciones que el panel necesita.
+
+## Stack propuesto
+
+| Pieza | Elección | Por qué |
+| --- | --- | --- |
+| Partner API (backend) | **.NET 8 / ASP.NET Core** | Maduro, tipado, rápido, fácil de contratar en LatAm. Si el core de GRAVL ya es .NET, mismo equipo y mismas prácticas. |
+| Base de datos B2B | **PostgreSQL 16** con Row-Level Security | Aislamiento por partner en la base, no solo en el código. Esquema propuesto: `db/schema.sql`. |
+| Frontends | Next.js (este repo) | Portal y consola comparten el design system. |
+| Lectura de datos del socio | `api.gravl.ai` vía OAuth | No duplicamos ni copiamos el core: leemos lo que el socio autorizó. |
+| Integraciones | Conectores por ERP (el de SportClub primero) | Altas, bajas, plan y señales de pago. |
+
+Lo que vive en la base B2B: partners, sedes, inventario, acuerdos, política por plan, vínculos socio↔partner, señales del ERP, contactos enviados (para medir) y agregados diarios. **Los entrenamientos no viven acá: siguen en GRAVL.**
+
 ## El problema
 
 Hoy hay **tres audiencias** con intereses distintos y, a veces, opuestos:

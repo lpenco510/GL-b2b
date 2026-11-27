@@ -17,7 +17,7 @@ export function qrPath(value: string, cell: number, offset = 0) {
   return { d, size };
 }
 
-export default function QrCode({ value, size = 160, fg = '#080A0E', bg = '#F8FAFC' }: { value: string; size?: number; fg?: string; bg?: string }) {
+export default function QrCode({ value, size = 160, fg = '#080e18', bg = '#ffffff' }: { value: string; size?: number; fg?: string; bg?: string }) {
   const { d, modules } = useMemo(() => {
     const p = qrPath(value, 1, 4); // 4 módulos de quiet zone
     return { d: p.d, modules: p.size + 8 };
@@ -40,15 +40,15 @@ export function buildPosterSvg({ gym, location, url }: { gym: string; location: 
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-  <rect width="${W}" height="${H}" fill="#080A0E"/>
-  <rect x="60" y="60" width="${W - 120}" height="${H - 120}" rx="48" fill="none" stroke="#C6FF00" stroke-opacity="0.35" stroke-width="4"/>
-  <text x="${W / 2}" y="250" fill="#C6FF00" font-family="Helvetica, Arial, sans-serif" font-size="64" font-weight="800" text-anchor="middle" letter-spacing="12">${esc(gym.toUpperCase())} × GRAVL</text>
-  <text x="${W / 2}" y="420" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="110" font-weight="800" text-anchor="middle">Tu rutina con IA,</text>
-  <text x="${W / 2}" y="540" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="110" font-weight="800" text-anchor="middle">gratis para socios.</text>
-  <rect x="${(W - qrBox) / 2}" y="660" width="${qrBox}" height="${qrBox}" rx="40" fill="#F8FAFC"/>
-  <g transform="translate(${(W - qrBox) / 2 + 60} ${660 + 60}) scale(${scale})"><path d="${d}" fill="#080A0E" shape-rendering="crispEdges"/></g>
-  <text x="${W / 2}" y="1720" fill="#F8FAFC" font-family="Helvetica, Arial, sans-serif" font-size="58" font-weight="700" text-anchor="middle">Escaneá, descargá la app y entrená</text>
-  <text x="${W / 2}" y="1800" fill="#94A3B8" font-family="Helvetica, Arial, sans-serif" font-size="46" text-anchor="middle">con las máquinas exactas de ${esc(location)}.</text>
-  <text x="${W / 2}" y="1960" fill="#64748B" font-family="Courier New, monospace" font-size="36" text-anchor="middle">${esc(url.replace('https://', ''))}</text>
+  <rect width="${W}" height="${H}" fill="#080e18"/>
+  <rect x="60" y="60" width="${W - 120}" height="${H - 120}" rx="48" fill="none" stroke="var(--color-gravl-volt)" stroke-opacity="0.35" stroke-width="4"/>
+  <text x="${W / 2}" y="250" fill="var(--color-gravl-volt)" font-family="Helvetica, Arial, sans-serif" font-size="64" font-weight="800" text-anchor="middle" letter-spacing="12">${esc(gym.toUpperCase())} × GRAVL</text>
+  <text x="${W / 2}" y="420" fill="var(--color-gravl-text)" font-family="Helvetica, Arial, sans-serif" font-size="110" font-weight="800" text-anchor="middle">Tu rutina con IA,</text>
+  <text x="${W / 2}" y="540" fill="var(--color-gravl-text)" font-family="Helvetica, Arial, sans-serif" font-size="110" font-weight="800" text-anchor="middle">gratis para socios.</text>
+  <rect x="${(W - qrBox) / 2}" y="660" width="${qrBox}" height="${qrBox}" rx="40" fill="var(--color-gravl-text)"/>
+  <g transform="translate(${(W - qrBox) / 2 + 60} ${660 + 60}) scale(${scale})"><path d="${d}" fill="#080e18" shape-rendering="crispEdges"/></g>
+  <text x="${W / 2}" y="1720" fill="var(--color-gravl-text)" font-family="Helvetica, Arial, sans-serif" font-size="58" font-weight="700" text-anchor="middle">Escaneá, descargá la app y entrená</text>
+  <text x="${W / 2}" y="1800" fill="var(--color-gravl-text-secondary)" font-family="Helvetica, Arial, sans-serif" font-size="46" text-anchor="middle">con las máquinas exactas de ${esc(location)}.</text>
+  <text x="${W / 2}" y="1960" fill="var(--color-gravl-text-muted)" font-family="Courier New, monospace" font-size="36" text-anchor="middle">${esc(url.replace('https://', ''))}</text>
 </svg>`;
 }

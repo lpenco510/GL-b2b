@@ -4,7 +4,7 @@
  * está realmente en juego.
  */
 import type { B2BMemberTelemetry } from './types';
-import type { ContactPolicy, MonetizationModel } from './deals';
+import { policyFor, type ContactPolicy, type Deal, type MonetizationModel } from './deals';
 import { daysBetween, REFERENCE_NOW } from './clock';
 
 export type NudgeChannel = 'PUSH' | 'STAFF';
@@ -90,4 +90,25 @@ export function revenueAtRiskUsd(members: B2BMemberTelemetry[], model: Monetizat
 export function dormantPayerRevenueUsd(members: B2BMemberTelemetry[], policy: ContactPolicy, monthlyFeeUsd: number) {
   const dormant = members.filter((m) => m.paymentStatus === 'CURRENT' && !m.cancelIntent && isDormant(m, policy));
   return { count: dormant.length, annualUsd: dormant.length * monthlyFeeUsd * 12 };
+}
+
+/**
+ * Cuotas mensuales en riesgo en los próximos 12 meses, respetando el modelo de CADA plan.
+ * Se expresa en cuotas (no en moneda) para no depender del precio de cada plan:
+ * el partner lo multiplica por su cuota promedio.
+ */
+export function feesAtRisk(members: B2BMemberTelemetry[], deal: Deal): number {
+  return Math.round(
+    members.reduce((acc, m) => {
+      const { monetization } = policyFor(deal, m.planId);
+      if (monetization === 'BREAKAGE') return acc + (m.cancelIntent ? CANCEL_PROBABILITY[m.cancelIntent] * 12 : 0);
+      if (m.status === 'AT_RISK' || m.status === 'NEEDS_NUDGE' || m.cancelIntent) return acc + (m.churnRisk / 100) * 12;
+      return acc;
+    }, 0),
+  );
+}
+
+/** Decisión de contacto usando la política del plan del socio. */
+export function nudgeDecisionFor(m: B2BMemberTelemetry, deal: Deal, opts: { lastNudgedAt?: string; now?: Date } = {}) {
+  return nudgeDecision(m, policyFor(deal, m.planId).contactPolicy, opts);
 }

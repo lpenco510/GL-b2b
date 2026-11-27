@@ -25,7 +25,7 @@ export default function MarketsPage() {
           return (
             <Card key={m.code} className="flex flex-col p-5">
               <div className="flex items-center justify-between">
-                <p className="text-base font-bold text-white">{m.flag} {m.name}</p>
+                <p className="text-base font-bold text-gravl-text">{m.flag} {m.name}</p>
                 <Badge tone={statusMeta[m.status].tone}>{statusMeta[m.status].label}</Badge>
               </div>
               <dl className="mt-4 space-y-1.5 text-xs">
@@ -44,7 +44,7 @@ export default function MarketsPage() {
                   </div>
                 ))}
               </dl>
-              <p className="mt-4 border-t border-white/[0.06] pt-3 text-[11px] leading-relaxed text-gravl-text-muted">{m.notes}</p>
+              <p className="mt-4 border-t border-gravl-text/[0.06] pt-3 text-[11px] leading-relaxed text-gravl-text-muted">{m.notes}</p>
             </Card>
           );
         })}

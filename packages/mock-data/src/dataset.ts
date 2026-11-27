@@ -1,5 +1,6 @@
 // GRAVL Partner & Enterprise OS — Dataset mock determinístico
-// Partner principal: "9 Fitness", cadena con 3 sedes y ~1.240 socios.
+// Partner de ejemplo: SportClub (AR). Piloto de 12 sedes AMBA, ~3.600 socios con GRAVL vinculado.
+// ⚠️ Todos los números son SIMULADOS: no son datos de SportClub.
 //
 // Reglas del dataset:
 //  • Todo es determinístico (PRNG con semilla) → SSR e hidratación coinciden.
@@ -49,133 +50,119 @@ function seededRandom(seed: number): () => number {
 
 // ─── Organización / tenants por vertical ─────────────────────────
 export const organization: Organization = {
-  id: 'org_9fitness_01',
-  name: '9 Fitness',
-  shortName: '9F',
-  slug: '9fitness',
+  id: 'org_sportclub',
+  name: 'SportClub',
+  shortName: 'SC',
+  slug: 'sportclub',
   vertical: 'GYM_CHAIN',
-  planTier: 'GROWTH',
-  seatLimit: 1500,
-  activeSeats: 1240,
-  mrrUsd: 3100,
-  avgMonthlyFeeUsd: 45,
-  pricePerSeatUsd: 2.5,
-  totalGymMembers: 4120,
+  planTier: 'ENTERPRISE',
+  seatLimit: 6000,
+  activeSeats: 3600,
+  mrrUsd: 0,
+  avgMonthlyFeeUsd: 40,
+  pricePerSeatUsd: 0,
+  /** Socios de las 12 sedes del piloto según el ERP (usen o no GRAVL). */
+  totalGymMembers: 21400,
   branding: {
-    logoUrl: '/logo-9fitness.svg',
-    accentHex: '#C6FF00',
-    welcomeMessage: 'Bienvenido a 9 Fitness — Tu fuerza, tu comunidad.',
+    logoUrl: '/logo-sportclub.svg',
+    welcomeMessage: 'SportClub × GRAVL — tu plan de fuerza, en cualquier sede.',
   },
   integrations: {
-    provider: 'EVO',
-    webhookUrl: 'https://api.9fitness.com/webhooks/gravl',
+    provider: 'NONE',
+    webhookUrl: '',
     autoRevokeOnCancel: true,
-    status: 'CONNECTED',
+    status: 'PENDING',
   },
 };
 
 
-// ─── Máquinas por sede ───────────────────────────────────────────
-const palermoMachines: GymMachine[] = [
-  { machineId: 'm01', name: 'Bench Press', zone: 'FREE_WEIGHTS', quantity: 3, status: 'OPERATIONAL', weeklyUsageRate: 88 },
-  { machineId: 'm02', name: 'Squat Rack', zone: 'RACKS', quantity: 4, status: 'OPERATIONAL', weeklyUsageRate: 94 },
-  { machineId: 'm03', name: 'Plataforma de Peso Muerto', zone: 'FREE_WEIGHTS', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 72 },
-  { machineId: 'm04', name: 'Cable Crossover', zone: 'CABLES', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 91 },
-  { machineId: 'm05', name: 'Lat Pulldown', zone: 'CABLES', quantity: 3, status: 'OPERATIONAL', weeklyUsageRate: 85 },
-  { machineId: 'm06', name: 'Prensa de Piernas', zone: 'MACHINES', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 78 },
-  { machineId: 'm07', name: 'Extensión de Cuádriceps', zone: 'MACHINES', quantity: 2, status: 'MAINTENANCE', weeklyUsageRate: 65 },
-  { machineId: 'm08', name: 'Curl Femoral', zone: 'MACHINES', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 60 },
-  { machineId: 'm09', name: 'Hack Squat', zone: 'MACHINES', quantity: 1, status: 'OPERATIONAL', weeklyUsageRate: 82 },
-  { machineId: 'm10', name: 'Smith Machine', zone: 'RACKS', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 70 },
-  { machineId: 'm11', name: 'Pec Deck', zone: 'MACHINES', quantity: 1, status: 'OPERATIONAL', weeklyUsageRate: 55 },
-  { machineId: 'm12', name: 'Remo Sentado', zone: 'MACHINES', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 68 },
-  { machineId: 'm13', name: 'Press de Hombros', zone: 'MACHINES', quantity: 1, status: 'OPERATIONAL', weeklyUsageRate: 52 },
-  { machineId: 'm14', name: 'Banco Inclinado', zone: 'FREE_WEIGHTS', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 76 },
-  { machineId: 'm15', name: 'Cinta de Correr', zone: 'CARDIO', quantity: 8, status: 'OPERATIONAL', weeklyUsageRate: 45 },
-  { machineId: 'm16', name: 'Assault Bike', zone: 'CARDIO', quantity: 4, status: 'OPERATIONAL', weeklyUsageRate: 38 },
-  { machineId: 'm17', name: 'Remo Ergómetro', zone: 'CARDIO', quantity: 3, status: 'OPERATIONAL', weeklyUsageRate: 42 },
-  { machineId: 'm18', name: 'Banco Scott', zone: 'FREE_WEIGHTS', quantity: 1, status: 'OPERATIONAL', weeklyUsageRate: 48 },
+// ─── Sedes del piloto ────────────────────────────────────────────
+// SportClub tiene +1.100 sedes en categorías Flex, Plus, Total y Elite (sportclub.com.ar).
+// La demo modela un piloto realista: 12 sedes de AMBA. Los datos son SIMULADOS.
+
+/** Inventario base de una sede de musculación. Cada sede lo ajusta. */
+const machineTemplate: { name: string; zone: GymMachine['zone']; qty: number; demand: number }[] = [
+  { name: 'Squat Rack', zone: 'RACKS', qty: 3, demand: 94 },
+  { name: 'Bench Press', zone: 'FREE_WEIGHTS', qty: 3, demand: 88 },
+  { name: 'Cable Crossover', zone: 'CABLES', qty: 2, demand: 90 },
+  { name: 'Lat Pulldown', zone: 'CABLES', qty: 2, demand: 84 },
+  { name: 'Prensa de Piernas', zone: 'MACHINES', qty: 2, demand: 78 },
+  { name: 'Hack Squat', zone: 'MACHINES', qty: 1, demand: 80 },
+  { name: 'Banco Inclinado', zone: 'FREE_WEIGHTS', qty: 2, demand: 74 },
+  { name: 'Smith Machine', zone: 'RACKS', qty: 2, demand: 68 },
+  { name: 'Remo Sentado', zone: 'MACHINES', qty: 2, demand: 66 },
+  { name: 'Extensión de Cuádriceps', zone: 'MACHINES', qty: 2, demand: 62 },
+  { name: 'Curl Femoral', zone: 'MACHINES', qty: 2, demand: 58 },
+  { name: 'Pec Deck', zone: 'MACHINES', qty: 1, demand: 54 },
+  { name: 'Press de Hombros', zone: 'MACHINES', qty: 1, demand: 50 },
+  { name: 'Cinta de Correr', zone: 'CARDIO', qty: 8, demand: 45 },
+  { name: 'Remo Ergómetro', zone: 'CARDIO', qty: 3, demand: 40 },
 ];
 
-export const locations: GymLocation[] = [
-  {
-    id: 'loc_palermo',
-    organizationId: 'org_9fitness_01',
-    name: 'Sede Palermo',
-    shortName: 'Palermo',
-    city: 'Buenos Aires',
-    country: 'Argentina',
-    qrDeepLink: 'https://gravl.ai/join/9fitness/palermo',
-    liveActiveMembersCount: 24,
-    floorCapacity: 60,
-    equipmentProfile: {
-      weightUnit: 'KG',
-      availablePlates: [1.25, 2.5, 5, 10, 15, 20, 25],
-      dumbbellMax: 50,
-      dumbbellStep: 2,
-      machines: palermoMachines,
-    },
-  },
-  {
-    id: 'loc_belgrano',
-    organizationId: 'org_9fitness_01',
-    name: 'Sede Belgrano',
-    shortName: 'Belgrano',
-    city: 'Buenos Aires',
-    country: 'Argentina',
-    qrDeepLink: 'https://gravl.ai/join/9fitness/belgrano',
-    liveActiveMembersCount: 18,
-    floorCapacity: 42,
-    equipmentProfile: {
-      weightUnit: 'KG',
-      availablePlates: [1.25, 2.5, 5, 10, 15, 20, 25],
-      dumbbellMax: 46,
-      dumbbellStep: 2,
-      machines: [
-        { machineId: 'b01', name: 'Bench Press', zone: 'FREE_WEIGHTS', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 84 },
-        { machineId: 'b02', name: 'Squat Rack', zone: 'RACKS', quantity: 3, status: 'OPERATIONAL', weeklyUsageRate: 90 },
-        { machineId: 'b03', name: 'Plataforma de Peso Muerto', zone: 'FREE_WEIGHTS', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 68 },
-        { machineId: 'b04', name: 'Cable Crossover', zone: 'CABLES', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 87 },
-        { machineId: 'b05', name: 'Lat Pulldown', zone: 'CABLES', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 80 },
-        { machineId: 'b06', name: 'Prensa de Piernas', zone: 'MACHINES', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 75 },
-        { machineId: 'b07', name: 'Extensión de Cuádriceps', zone: 'MACHINES', quantity: 1, status: 'OPERATIONAL', weeklyUsageRate: 62 },
-        { machineId: 'b08', name: 'Hack Squat', zone: 'MACHINES', quantity: 1, status: 'OPERATIONAL', weeklyUsageRate: 78 },
-        { machineId: 'b09', name: 'Smith Machine', zone: 'RACKS', quantity: 1, status: 'OPERATIONAL', weeklyUsageRate: 66 },
-        { machineId: 'b10', name: 'Cinta de Correr', zone: 'CARDIO', quantity: 6, status: 'OPERATIONAL', weeklyUsageRate: 50 },
-        { machineId: 'b11', name: 'Assault Bike', zone: 'CARDIO', quantity: 3, status: 'OPERATIONAL', weeklyUsageRate: 35 },
-        { machineId: 'b12', name: 'Remo Sentado', zone: 'MACHINES', quantity: 1, status: 'OPERATIONAL', weeklyUsageRate: 71 },
-      ],
-    },
-  },
-  {
-    id: 'loc_nordelta',
-    organizationId: 'org_9fitness_01',
-    name: 'Sede Nordelta',
-    shortName: 'Nordelta',
-    city: 'Tigre',
-    country: 'Argentina',
-    qrDeepLink: 'https://gravl.ai/join/9fitness/nordelta',
-    liveActiveMembersCount: 12,
-    floorCapacity: 30,
-    equipmentProfile: {
-      weightUnit: 'KG',
-      availablePlates: [2.5, 5, 10, 15, 20, 25],
-      dumbbellMax: 40,
-      dumbbellStep: 2,
-      machines: [
-        { machineId: 'n01', name: 'Bench Press', zone: 'FREE_WEIGHTS', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 80 },
-        { machineId: 'n02', name: 'Squat Rack', zone: 'RACKS', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 86 },
-        { machineId: 'n03', name: 'Cable Crossover', zone: 'CABLES', quantity: 1, status: 'OPERATIONAL', weeklyUsageRate: 92 },
-        { machineId: 'n04', name: 'Lat Pulldown', zone: 'CABLES', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 74 },
-        { machineId: 'n05', name: 'Prensa de Piernas', zone: 'MACHINES', quantity: 1, status: 'OPERATIONAL', weeklyUsageRate: 72 },
-        { machineId: 'n06', name: 'Extensión de Cuádriceps', zone: 'MACHINES', quantity: 1, status: 'OPERATIONAL', weeklyUsageRate: 58 },
-        { machineId: 'n07', name: 'Smith Machine', zone: 'RACKS', quantity: 1, status: 'OPERATIONAL', weeklyUsageRate: 64 },
-        { machineId: 'n08', name: 'Cinta de Correr', zone: 'CARDIO', quantity: 5, status: 'OPERATIONAL', weeklyUsageRate: 48 },
-        { machineId: 'n09', name: 'Remo Ergómetro', zone: 'CARDIO', quantity: 2, status: 'OPERATIONAL', weeklyUsageRate: 40 },
-      ],
-    },
-  },
+const pilotSedes: { id: string; name: string; tier: 'Flex' | 'Plus' | 'Total' | 'Elite'; region: string; city: string; capacity: number; live: number }[] = [
+  { id: 'loc_palermo', name: 'Palermo', tier: 'Total', region: 'CABA', city: 'CABA', capacity: 90, live: 38 },
+  { id: 'loc_belgrano', name: 'Belgrano', tier: 'Total', region: 'CABA', city: 'CABA', capacity: 80, live: 31 },
+  { id: 'loc_caballito', name: 'Caballito', tier: 'Plus', region: 'CABA', city: 'CABA', capacity: 70, live: 26 },
+  { id: 'loc_recoleta', name: 'Recoleta', tier: 'Elite', region: 'CABA', city: 'CABA', capacity: 60, live: 22 },
+  { id: 'loc_villacrespo', name: 'Villa Crespo', tier: 'Plus', region: 'CABA', city: 'CABA', capacity: 55, live: 19 },
+  { id: 'loc_nunez', name: 'Núñez', tier: 'Plus', region: 'CABA', city: 'CABA', capacity: 55, live: 18 },
+  { id: 'loc_flores', name: 'Flores', tier: 'Flex', region: 'CABA', city: 'CABA', capacity: 50, live: 15 },
+  { id: 'loc_nordelta', name: 'Nordelta', tier: 'Total', region: 'GBA Norte', city: 'Tigre', capacity: 65, live: 21 },
+  { id: 'loc_sanisidro', name: 'San Isidro', tier: 'Plus', region: 'GBA Norte', city: 'San Isidro', capacity: 60, live: 20 },
+  { id: 'loc_pilar', name: 'Pilar', tier: 'Flex', region: 'GBA Norte', city: 'Pilar', capacity: 50, live: 14 },
+  { id: 'loc_ramos', name: 'Ramos Mejía', tier: 'Flex', region: 'GBA Oeste', city: 'La Matanza', capacity: 45, live: 12 },
+  { id: 'loc_quilmes', name: 'Quilmes', tier: 'Flex', region: 'GBA Sur', city: 'Quilmes', capacity: 45, live: 11 },
 ];
+
+function buildMachines(sedeIdx: number, sedeId: string, capacity: number): GymMachine[] {
+  const rng = seededRandom(1000 + sedeIdx * 97);
+  const prefix = sedeId.replace('loc_', '').slice(0, 3);
+  return machineTemplate
+    .filter((t) => !(capacity < 50 && (t.name === 'Hack Squat' || t.name === 'Pec Deck')))
+    .map((t, i) => {
+      const qty = Math.max(1, Math.round(t.qty * (capacity / 70) + (rng() - 0.5)));
+      const demand = Math.min(99, Math.max(25, Math.round(t.demand + (rng() - 0.5) * 16)));
+      // Series registradas en GRAVL ∝ demanda × cantidad × tamaño de la sede.
+      const loggedSets30d = Math.round(demand * qty * (capacity / 10) * (0.8 + rng() * 0.4));
+      // "¿Máquina ocupada?": crece fuerte cuando la demanda supera la oferta.
+      const pressure = demand / (qty * 25);
+      const busySwaps30d = Math.round(loggedSets30d * Math.max(0.004, Math.min(0.2, (pressure - 0.9) * 0.12)));
+      return {
+        machineId: `${prefix}${String(i + 1).padStart(2, '0')}`,
+        name: t.name,
+        zone: t.zone,
+        quantity: qty,
+        status: sedeIdx === 0 && t.name === 'Extensión de Cuádriceps' ? 'MAINTENANCE' : 'OPERATIONAL',
+        weeklyUsageRate: demand,
+        loggedSets30d,
+        busySwaps30d,
+      };
+    });
+}
+
+export const locations: GymLocation[] = pilotSedes.map((s, i) => ({
+  id: s.id,
+  organizationId: 'org_sportclub',
+  name: `SportClub ${s.name}`,
+  shortName: s.name,
+  city: s.city,
+  country: 'Argentina',
+  region: s.region,
+  tier: s.tier,
+  qrDeepLink: `https://gravl.ai/join/sportclub/${s.id.replace('loc_', '')}`,
+  liveActiveMembersCount: s.live,
+  floorCapacity: s.capacity,
+  equipmentProfile: {
+    weightUnit: 'KG',
+    availablePlates: s.tier === 'Flex' ? [2.5, 5, 10, 15, 20] : [1.25, 2.5, 5, 10, 15, 20, 25],
+    dumbbellMax: s.tier === 'Flex' ? 36 : s.tier === 'Elite' ? 60 : 50,
+    dumbbellStep: 2,
+    machines: buildMachines(i, s.id, s.capacity),
+  },
+}));
+
+/** Tamaño de la red completa (fuera del piloto). */
+export const networkSize = { sedes: 1100, pilotSedes: pilotSedes.length, label: '+1.100 sedes' };
 
 export const locationById = (id: string) => locations.find((l) => l.id === id);
 export const locationName = (id: string) => locationById(id)?.shortName ?? '—';
@@ -200,12 +187,19 @@ const lastNames = [
 function generateMembers(): B2BMemberTelemetry[] {
   const rng = seededRandom(42);
   const between = (a: number, b: number) => Math.floor(a + rng() * (b - a + 1));
-  const locationIds = ['loc_palermo', 'loc_belgrano', 'loc_nordelta'];
+  // Reparto de socios proporcional a la capacidad de cada sede.
+  const totalCap = pilotSedes.reduce((a, x) => a + x.capacity, 0);
+  const cumulative = pilotSedes.map((x, i) => pilotSedes.slice(0, i + 1).reduce((a, y) => a + y.capacity, 0) / totalCap);
   const out: B2BMemberTelemetry[] = [];
 
-  for (let i = 0; i < 1240; i++) {
+  for (let i = 0; i < 3600; i++) {
     const r = rng();
-    const locationId = locationIds[r < 0.5 ? 0 : r < 0.83 ? 1 : 2];
+    const sedeIdx = cumulative.findIndex((c) => r <= c);
+    const sede = pilotSedes[sedeIdx === -1 ? pilotSedes.length - 1 : sedeIdx];
+    const locationId = sede.id;
+    // Plan: en sedes Flex predomina el Flex; en Total/Elite, el plan Total.
+    const pr = rng();
+    const planId = sede.tier === 'Flex' ? (pr < 0.7 ? 'flex' : 'plus') : sede.tier === 'Plus' ? (pr < 0.25 ? 'flex' : pr < 0.85 ? 'plus' : 'total') : pr < 0.15 ? 'plus' : 'total';
     const fullName = `${firstNames[Math.floor(rng() * firstNames.length)]} ${lastNames[Math.floor(rng() * lastNames.length)]}`;
 
     // Antigüedad: ~9% son altas de los últimos 30 días.
@@ -253,13 +247,13 @@ function generateMembers(): B2BMemberTelemetry[] {
 
     // Señales de pago / intención de baja (vienen del ERP y de la app).
     const p = rng();
-    const paymentStatus: B2BMemberTelemetry['paymentStatus'] = p < 0.03 ? 'FAILED' : p < 0.05 ? 'FROZEN' : 'CURRENT';
+    const paymentStatus: B2BMemberTelemetry['paymentStatus'] = p < 0.012 ? 'FAILED' : p < 0.02 ? 'FROZEN' : 'CURRENT';
     const ci = rng();
     const cancelIntent: B2BMemberTelemetry['cancelIntent'] =
       paymentStatus === 'FAILED' ? 'PAYMENT_FAILED'
         : paymentStatus === 'FROZEN' ? 'FREEZE_REQUEST'
-        : status === 'AT_RISK' && ci < 0.12 ? 'CANCEL_PAGE_VISIT'
-        : status === 'NEEDS_NUDGE' && ci < 0.05 ? 'DOWNGRADE_ASKED'
+        : status === 'AT_RISK' && ci < 0.06 ? 'CANCEL_PAGE_VISIT'
+        : status === 'NEEDS_NUDGE' && ci < 0.02 ? 'DOWNGRADE_ASKED'
         : undefined;
 
     out.push({
@@ -269,6 +263,7 @@ function generateMembers(): B2BMemberTelemetry[] {
       consents,
       paymentStatus,
       cancelIntent,
+      planId,
       fullName,
       locationId,
       joinedAt: isoDaysAgo(tenureDays),
@@ -330,7 +325,7 @@ export const challenges: GymChallenge[] = [
     startDate: isoDate(-22),
     endDate: isoDate(8),
     participantsCount: 342,
-    rewardDescription: 'Un mes gratis de GRAVL Pro + merch exclusivo de 9 Fitness',
+    rewardDescription: 'Un mes gratis de GRAVL Pro + beneficio exclusivo SportClub',
     status: 'ACTIVE',
     currentValue: 12,
   },
@@ -459,7 +454,8 @@ export const muscleScores: MuscleScore[] = [
 ];
 
 // ─── Horarios pico (red completa) ────────────────────────────────
-export const peakHoursData: PeakHourRow[] = [
+// Inicios de entrenamiento registrados en GRAVL por franja (red del piloto).
+const peakBase: PeakHourRow[] = [
   { hour: '6', hour24: 6, mon: 12, tue: 15, wed: 14, thu: 16, fri: 11, sat: 8, sun: 4 },
   { hour: '7', hour24: 7, mon: 28, tue: 32, wed: 30, thu: 34, fri: 26, sat: 18, sun: 8 },
   { hour: '8', hour24: 8, mon: 35, tue: 38, wed: 36, thu: 40, fri: 30, sat: 22, sun: 12 },
@@ -474,6 +470,12 @@ export const peakHoursData: PeakHourRow[] = [
   { hour: '20', hour24: 20, mon: 32, tue: 35, wed: 34, thu: 38, fri: 28, sat: 8, sun: 4 },
   { hour: '21', hour24: 21, mon: 20, tue: 22, wed: 21, thu: 24, fri: 18, sat: 5, sun: 2 },
 ];
+const PILOT_SCALE = 4.5;
+export const peakHoursData: PeakHourRow[] = peakBase.map((r) => ({
+  ...r,
+  mon: Math.round(r.mon * PILOT_SCALE), tue: Math.round(r.tue * PILOT_SCALE), wed: Math.round(r.wed * PILOT_SCALE),
+  thu: Math.round(r.thu * PILOT_SCALE), fri: Math.round(r.fri * PILOT_SCALE), sat: Math.round(r.sat * PILOT_SCALE), sun: Math.round(r.sun * PILOT_SCALE),
+}));
 
 // ─── Ranking mensual ─────────────────────────────────────────────
 export const leaderboard = [

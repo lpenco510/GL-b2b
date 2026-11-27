@@ -1,211 +1,176 @@
-/* GRAVL design tokens + capas base/componentes. Lo importa cada app después de tailwindcss. */
-
 /*
- * GRAVL B2B OS — Design System
- * ─────────────────────────────────────────────────────────────
- * IMPORTANTE: todo estilo propio vive dentro de @layer (base/components).
- * En Tailwind v4 cualquier regla fuera de capa le gana a las utilidades,
- * por eso el viejo reset `* { padding: 0 }` anulaba todos los `p-*`/`pl-*`
- * y el sidebar quedaba encima del contenido.
+ * GRAVL design tokens · B2B
+ * Calcados de gravl.ai: tinta #080e18, lima #d2fe0b, radio .875rem,
+ * Inter Tight para UI y Barlow Condensed para cifras (como "entreno listo" / "12,480 kg").
+ *
+ * Reglas:
+ *  - Claro es el tema por defecto (igual que la marca). Oscuro = modo "sala".
+ *  - El lima es un RELLENO (botón primario, barra, foco). Nunca texto sobre blanco:
+ *    para texto/íconos de acento se usa --accent (oliva en claro, lima en oscuro).
+ *  - Todo CSS propio vive en @layer: en Tailwind v4 lo que está fuera de capa pisa las utilidades.
  */
 
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 @theme inline {
-  /* Superficies */
-  --color-gravl-canvas: #080A0E;
-  --color-gravl-surface: #0E1218;
-  --color-gravl-card: #141822;
-  --color-gravl-card-hover: #1A202E;
-  --color-gravl-raised: #121721;
+  /* Constantes de marca */
+  --color-gravl-ink: #080e18;
+  --color-gravl-lime: #d2fe0b;
 
-  /* Marca y semántica */
-  --color-gravl-volt: #C6FF00;
-  --color-gravl-volt-hover: #D4FF33;
-  --color-gravl-cyan: #38BDF8;
-  --color-gravl-emerald: #22C55E;
-  --color-gravl-amber: #F59E0B;
-  --color-gravl-crimson: #EF4444;
-  --color-gravl-violet: #A78BFA;
+  /* Semánticos (cambian con el tema) */
+  --color-gravl-canvas: var(--g-canvas);
+  --color-gravl-surface: var(--g-surface);
+  --color-gravl-card: var(--g-card);
+  --color-gravl-raised: var(--g-raised);
+  --color-gravl-text: var(--g-fg);
+  --color-gravl-text-secondary: var(--g-fg-2);
+  --color-gravl-text-muted: var(--g-fg-3);
+  --color-gravl-line: var(--g-line);
 
-  /* Texto */
-  --color-gravl-text: #F8FAFC;
-  --color-gravl-text-secondary: #94A3B8;
-  --color-gravl-text-muted: #64748B;
+  --color-gravl-volt: var(--g-accent);
+  --color-gravl-emerald: var(--g-good);
+  --color-gravl-amber: var(--g-warn);
+  --color-gravl-crimson: var(--g-bad);
+  --color-gravl-cyan: var(--g-info);
+  --color-gravl-violet: var(--g-violet);
 
-  /* Bordes */
-  --color-gravl-border: rgba(255, 255, 255, 0.08);
-  --color-gravl-border-hover: rgba(255, 255, 255, 0.18);
+  --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: var(--font-barlow), 'Arial Narrow', ui-sans-serif, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Tipografía: usamos las variables que inyecta next/font */
-  --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius-gravl: 0.875rem;
 
   --animate-fade-in: gravl-fade-in 0.2s ease-out both;
-  --animate-slide-up: gravl-slide-up 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-slide-in-right: gravl-slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-slide-in-left: gravl-slide-in-left 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-beacon: gravl-beacon 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-slide-up: gravl-slide-up 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-slide-in-right: gravl-slide-in-right 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-slide-in-left: gravl-slide-in-left 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+:root,
+[data-theme='light'] {
+  --g-canvas: #f4f5f4;
+  --g-surface: #ffffff;
+  --g-card: #ffffff;
+  --g-raised: #f4f5f4;
+  --g-fg: #080e18;
+  --g-fg-2: rgba(8, 14, 24, 0.7);
+  --g-fg-3: rgba(8, 14, 24, 0.5);
+  --g-line: rgba(8, 14, 24, 0.09);
+  --g-accent: #5d7a00;
+  --g-good: #1a8f4a;
+  --g-warn: #d45a00;
+  --g-bad: #e0244a;
+  --g-info: #1f6fd1;
+  --g-violet: #6d4ad8;
+  --g-shadow: 0 1px 2px rgba(8, 14, 24, 0.04), 0 1px 1px rgba(8, 14, 24, 0.03);
+  --g-shadow-hover: 0 10px 28px -12px rgba(8, 14, 24, 0.22), 0 2px 6px rgba(8, 14, 24, 0.05);
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --g-canvas: #0b0b0d;
+  --g-surface: #111113;
+  --g-card: #161617;
+  --g-raised: #1f1f22;
+  --g-fg: #f4f5f4;
+  --g-fg-2: rgba(244, 245, 244, 0.68);
+  --g-fg-3: rgba(244, 245, 244, 0.45);
+  --g-line: rgba(255, 255, 255, 0.08);
+  --g-accent: #d2fe0b;
+  --g-good: #3ddc84;
+  --g-warn: #ff8a3d;
+  --g-bad: #ff4d6d;
+  --g-info: #4ea2ff;
+  --g-violet: #a78bfa;
+  --g-shadow: 0 0 0 transparent;
+  --g-shadow-hover: 0 14px 32px -14px rgba(0, 0, 0, 0.8);
+  color-scheme: dark;
 }
 
 @layer base {
   html {
-    background: var(--color-gravl-canvas);
-    color: var(--color-gravl-text);
+    background: var(--g-canvas);
+    color: var(--g-fg);
     font-family: var(--font-sans);
-    color-scheme: dark;
     -webkit-tap-highlight-color: transparent;
   }
-
   body {
-    background:
-      radial-gradient(circle at 50% 0%, rgba(198, 255, 0, 0.035) 0%, transparent 55%),
-      radial-gradient(circle at 100% 50%, rgba(56, 189, 248, 0.025) 0%, transparent 50%),
-      var(--color-gravl-canvas);
+    background: var(--g-canvas);
     min-height: 100vh;
     overflow-x: hidden;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
-
-  ::selection {
-    background: rgba(198, 255, 0, 0.3);
-    color: #fff;
-  }
-
-  :focus-visible {
-    outline: 2px solid var(--color-gravl-volt);
-    outline-offset: 2px;
-    border-radius: 8px;
-  }
-
-  button:not(:disabled),
-  [role='button']:not([aria-disabled='true']),
-  select {
-    cursor: pointer;
-  }
-
-  select option {
-    background: var(--color-gravl-raised);
-    color: var(--color-gravl-text);
-  }
-
-  input[type='range'] {
-    accent-color: var(--color-gravl-volt);
-  }
-
-  input[type='date']::-webkit-calendar-picker-indicator {
-    filter: invert(0.8);
-  }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::selection { background: #d2fe0b; color: #080e18; }
+  :focus-visible { outline: 2px solid #d2fe0b; outline-offset: 2px; border-radius: 8px; }
+  [data-theme='light'] :focus-visible { outline-color: #080e18; }
+  button:not(:disabled), [role='button']:not([aria-disabled='true']), select { cursor: pointer; }
+  select option { background: var(--g-surface); color: var(--g-fg); }
+  input[type='range'] { accent-color: #080e18; }
+  [data-theme='dark'] input[type='range'] { accent-color: #d2fe0b; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.22); }
+  ::-webkit-scrollbar-thumb { background: var(--g-line); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--g-fg-3); }
 
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   }
 }
 
 @layer components {
-  /* Tarjeta ejecutiva principal */
+  /* Superficie base: plana, borde fino, sin brillos. */
   .gravl-card {
     position: relative;
     overflow: hidden;
-    border-radius: 16px;
-    background: linear-gradient(180deg, rgba(22, 28, 40, 0.82) 0%, rgba(14, 18, 26, 0.92) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.07), 0 12px 32px -8px rgba(0, 0, 0, 0.6);
-    transition: border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    border-radius: var(--radius-gravl);
+    background: var(--g-card);
+    border: 1px solid var(--g-line);
+    box-shadow: var(--g-shadow);
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
   }
+  /* Solo lo clickeable se mueve: un lift corto y una sombra que "aterriza". */
+  .gravl-card-interactive:hover { transform: translateY(-2px); box-shadow: var(--g-shadow-hover); border-color: color-mix(in srgb, var(--g-fg) 16%, transparent); }
+  .gravl-card-interactive:active { transform: translateY(0); transition-duration: 0.08s; }
 
-  .gravl-card-interactive:hover {
-    border-color: rgba(255, 255, 255, 0.16);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), 0 18px 40px -10px rgba(0, 0, 0, 0.75);
-  }
-
-  /* Línea especular superior */
-  .gravl-glow::before,
-  .gravl-glow-cyan::before,
-  .gravl-glow-crimson::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 10%;
-    right: 10%;
-    height: 1px;
-    pointer-events: none;
-  }
-  .gravl-glow::before { background: linear-gradient(90deg, transparent, rgba(198, 255, 0, 0.45), transparent); }
-  .gravl-glow-cyan::before { background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.45), transparent); }
-  .gravl-glow-crimson::before { background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.45), transparent); }
-
-  /* Paneles flotantes: modales, popovers, toasts */
   .gravl-glass {
-    background: rgba(16, 20, 29, 0.94);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 24px 60px -12px rgba(0, 0, 0, 0.8);
-    border-radius: 16px;
+    background: var(--g-surface);
+    border: 1px solid var(--g-line);
+    border-radius: var(--radius-gravl);
+    box-shadow: 0 24px 60px -16px rgba(8, 14, 24, 0.35);
   }
 
-  /* Números de telemetría */
-  /* Números alineados. La fuente mono se reserva para cifras protagonistas (KPIs). */
-  .tabular-nums {
-    font-variant-numeric: tabular-nums;
-  }
+  /* Cifras: Barlow Condensed como en la app ("12,480 kg"). */
+  .gravl-num { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; line-height: 0.9; }
+  .gravl-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--g-fg-3); }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
 
-  /* Inputs */
   .gravl-input {
     width: 100%;
-    background: var(--color-gravl-surface);
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: var(--g-surface);
+    border: 1px solid var(--g-line);
     border-radius: 12px;
     padding: 0.625rem 0.875rem;
     font-size: 0.875rem;
-    color: var(--color-gravl-text);
-    transition: border-color 0.15s;
+    color: var(--g-fg);
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
-  .gravl-input::placeholder { color: var(--color-gravl-text-muted); }
-  .gravl-input:focus { outline: none; border-color: rgba(198, 255, 0, 0.4); }
-  .gravl-input[aria-invalid='true'] { border-color: rgba(239, 68, 68, 0.6); }
+  .gravl-input::placeholder { color: var(--g-fg-3); }
+  .gravl-input:focus { outline: none; border-color: var(--g-fg); box-shadow: 0 0 0 3px color-mix(in srgb, #d2fe0b 55%, transparent); }
+  .gravl-input[aria-invalid='true'] { border-color: var(--g-bad); }
 
   .kbd {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    padding: 1px 5px;
-    border-radius: 5px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--color-gravl-text-secondary);
+    font-family: var(--font-sans); font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 6px;
+    border: 1px solid var(--g-line); background: var(--g-raised); color: var(--g-fg-2);
   }
+
+  /* Fila de tabla clickeable: transición suave del fondo. */
+  .gravl-row { transition: background-color 0.18s ease; }
+  .gravl-row:hover { background: color-mix(in srgb, var(--g-fg) 3.5%, transparent); }
 }
 
-@keyframes gravl-beacon {
-  0% { transform: scale(1); opacity: 0.9; }
-  50%, 100% { transform: scale(1.8); opacity: 0; }
-}
-@keyframes gravl-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes gravl-slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes gravl-slide-in-right {
-  from { opacity: 0; transform: translateX(24px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@keyframes gravl-slide-in-left {
-  from { opacity: 0; transform: translateX(-24px); }
-  to { opacity: 1; transform: translateX(0); }
-}
+@keyframes gravl-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes gravl-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes gravl-slide-in-right { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes gravl-slide-in-left { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
 
-/* Oculta el badge de dev de Next si tapa la UI */
-nextjs-portal {
-  display: none !important;
-}
+nextjs-portal { display: none !important; }

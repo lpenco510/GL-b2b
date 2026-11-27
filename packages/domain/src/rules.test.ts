@@ -58,3 +58,24 @@ test('descuentos grandes requieren aprobación', () => {
   const u = { activeUsers: 1000, eligible: 0, locations: 3, coachClients: 0, proUpsellRevenueUsd: 0 };
   assert.equal(approvalFor(p, gravlGrossMargin(p, u)).level, 'CEO');
 });
+
+import { policyFor, POLICY_ATTENDANCE, POLICY_BREAKAGE, type Deal } from './deals.ts';
+import { feesAtRisk } from './engagement.ts';
+
+const sportclub = {
+  monetization: 'ATTENDANCE', contactPolicy: POLICY_ATTENDANCE,
+  planPolicies: [
+    { planId: 'flex', label: 'Flex', billing: 'BASE_PLUS_USAGE', monetization: 'ATTENDANCE', contactPolicy: POLICY_ATTENDANCE, rationale: '' },
+    { planId: 'total', label: 'Total', billing: 'FIXED', monetization: 'BREAKAGE', contactPolicy: POLICY_BREAKAGE, rationale: '' },
+  ],
+} as unknown as Deal;
+
+test('misma cadena, distinto plan: Flex se reactiva, Total no', () => {
+  assert.equal(nudgeDecision(member({ planId: 'flex' }), policyFor(sportclub, 'flex').contactPolicy, { now: NOW }).allowed, true);
+  assert.equal(nudgeDecision(member({ planId: 'total' }), policyFor(sportclub, 'total').contactPolicy, { now: NOW }).allowed, false);
+});
+
+test('cuotas en riesgo: un durmiente de abono fijo no cuenta, uno de Flex sí', () => {
+  assert.equal(feesAtRisk([member({ planId: 'total' })], sportclub), 0);
+  assert.ok(feesAtRisk([member({ planId: 'flex' })], sportclub) > 0);
+});

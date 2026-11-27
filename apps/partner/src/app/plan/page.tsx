@@ -35,7 +35,7 @@ function Slider({ id, label, value, display, min, max, step, onChange }: {
     <div>
       <div className="mb-2 flex items-center justify-between">
         <label htmlFor={id} className="text-xs font-semibold text-gravl-text-secondary">{label}</label>
-        <span className="tabular-nums text-sm font-bold text-white">{display}</span>
+        <span className="tabular-nums text-sm font-bold text-gravl-text">{display}</span>
       </div>
       <input id={id} type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full" />
     </div>
@@ -105,10 +105,10 @@ function RoiSimulator() {
                   onClick={() => setPts(s.pts)}
                   className={cn(
                     'rounded-xl border p-2.5 text-left transition-colors',
-                    pts === s.pts ? 'border-gravl-cyan/50 bg-gravl-cyan/[0.08]' : 'border-white/[0.08] hover:border-white/[0.16]',
+                    pts === s.pts ? 'border-gravl-cyan/50 bg-gravl-cyan/[0.08]' : 'border-gravl-text/[0.08] hover:border-gravl-text/[0.16]',
                   )}
                 >
-                  <span className="block text-xs font-bold text-white">{s.label}</span>
+                  <span className="block text-xs font-bold text-gravl-text">{s.label}</span>
                   <span className="tabular-nums block text-[11px] text-gravl-text-muted">+{s.pts} pts</span>
                 </button>
               ))}
@@ -123,18 +123,18 @@ function RoiSimulator() {
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-gravl-volt/20 bg-gravl-volt/[0.05] p-4">
               <p className="text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">ROI</p>
-              <p className="tabular-nums mt-1 text-3xl font-black text-gravl-volt">{r.multiple.toFixed(1).replace('.', ',')}x</p>
+              <p className="mt-1 gravl-num text-[40px] text-gravl-volt">{r.multiple.toFixed(1).replace('.', ',')}x</p>
             </div>
-            <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+            <div className="rounded-xl border border-gravl-text/[0.08] bg-gravl-text/[0.02] p-4">
               <p className="text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">Repago</p>
-              <p className="tabular-nums mt-1 text-3xl font-black text-white">
+              <p className="mt-1 gravl-num text-[40px] text-gravl-text">
                 {Number.isFinite(r.paybackMonths) ? r.paybackMonths.toFixed(1).replace('.', ',') : '—'}
                 <span className="ml-1 text-sm font-semibold text-gravl-text-muted">meses</span>
               </p>
             </div>
           </div>
 
-          <div className="space-y-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
+          <div className="space-y-3 rounded-xl border border-gravl-text/[0.08] bg-gravl-text/[0.02] p-4">
             <div>
               <div className="mb-1.5 flex justify-between text-xs">
                 <span className="text-gravl-text-secondary">Ingreso retenido ({fmtInt(r.retained)} socios)</span>
@@ -145,11 +145,11 @@ function RoiSimulator() {
             <div>
               <div className="mb-1.5 flex justify-between text-xs">
                 <span className="text-gravl-text-secondary">Inversión GRAVL</span>
-                <span className="tabular-nums font-bold text-white">{fmtUsd(r.annualCost)}</span>
+                <span className="tabular-nums font-bold text-gravl-text">{fmtUsd(r.annualCost)}</span>
               </div>
-              <ProgressBar value={r.annualCost} max={max} color="#64748B" label="Inversión GRAVL" className="h-2.5" />
+              <ProgressBar value={r.annualCost} max={max} color="var(--color-gravl-text-muted)" label="Inversión GRAVL" className="h-2.5" />
             </div>
-            <div className="flex items-center justify-between border-t border-white/[0.06] pt-3">
+            <div className="flex items-center justify-between border-t border-gravl-text/[0.06] pt-3">
               <span className="text-xs font-semibold text-gravl-text-secondary">Beneficio neto anual</span>
               <span className={cn('tabular-nums text-lg font-black', r.net >= 0 ? 'text-gravl-volt' : 'text-rose-400')}>
                 {r.net >= 0 ? '+' : ''}
@@ -237,11 +237,11 @@ export default function PlanPage() {
         />
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
           {locations.map((loc) => (
-            <div key={loc.id} className="flex flex-col items-center rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 text-center">
-              <div className="rounded-2xl bg-[#F8FAFC] p-2 shadow-[0_0_30px_rgba(198,255,0,0.12)]">
+            <div key={loc.id} className="flex flex-col items-center rounded-2xl border border-gravl-text/[0.06] bg-gravl-text/[0.02] p-5 text-center">
+              <div className="rounded-2xl bg-[var(--color-gravl-text)] p-2 shadow-[0_0_30px_rgba(198,255,0,0.12)]">
                 <QrCode value={loc.qrDeepLink} size={148} />
               </div>
-              <p className="mt-4 text-sm font-bold text-white">{loc.name}</p>
+              <p className="mt-4 text-sm font-bold text-gravl-text">{loc.name}</p>
               <p className="mt-0.5 break-all font-mono text-[11px] text-gravl-text-muted">{loc.qrDeepLink.replace('https://', '')}</p>
               <div className="mt-4 flex gap-2">
                 <Button
@@ -277,15 +277,15 @@ export default function PlanPage() {
           ))}
         </div>
 
-        <div className="mt-6 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-          <p className="text-sm font-bold text-white">Embudo de activación · últimos 90 días</p>
+        <div className="mt-6 rounded-2xl border border-gravl-text/[0.06] bg-gravl-text/[0.02] p-5">
+          <p className="text-sm font-bold text-gravl-text">Embudo de activación · últimos 90 días</p>
           <ol className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
             {qrFunnel.map((step, i) => {
               const conv = i === 0 ? 100 : (step.value / qrFunnel[i - 1].value) * 100;
               return (
-                <li key={step.label} className="rounded-xl bg-white/[0.03] p-3">
+                <li key={step.label} className="rounded-xl bg-gravl-text/[0.03] p-3">
                   <p className="text-[11px] font-semibold text-gravl-text-muted">{step.label}</p>
-                  <p className="tabular-nums mt-1 text-xl font-black text-white">{fmtInt(step.value)}</p>
+                  <p className="mt-1 gravl-num text-[30px] text-gravl-text">{fmtInt(step.value)}</p>
                   <div className="mt-2">
                     <ProgressBar value={step.value} max={qrFunnel[0].value} label={step.label} />
                   </div>
@@ -309,13 +309,13 @@ export default function PlanPage() {
           />
           <div className="mt-6">
             <div className="flex items-end justify-between">
-              <p className="tabular-nums text-3xl font-black text-white">
+              <p className="gravl-num text-[40px] text-gravl-text">
                 {fmtInt(organization.activeSeats)}
                 <span className="text-base font-semibold text-gravl-text-muted"> / {fmtInt(organization.seatLimit)}</span>
               </p>
               <Badge tone={seatPct >= 80 ? 'amber' : 'emerald'}>{fmtPct(seatPct)} usado</Badge>
             </div>
-            <ProgressBar value={organization.activeSeats} max={organization.seatLimit} className="mt-3 h-2.5" color="linear-gradient(90deg,#C6FF00,#38BDF8)" label="Asientos usados" />
+            <ProgressBar value={organization.activeSeats} max={organization.seatLimit} className="mt-3 h-2.5" color="linear-gradient(90deg,var(--color-gravl-volt),var(--color-gravl-cyan))" label="Asientos usados" />
             <p className="mt-2 text-xs text-gravl-text-muted">{fmtInt(organization.seatLimit - organization.activeSeats)} asientos libres · +{weeklySeatGrowth} por semana</p>
           </div>
 
@@ -323,7 +323,7 @@ export default function PlanPage() {
             <div className="mt-5 flex items-start gap-3 rounded-xl border border-gravl-amber/25 bg-gravl-amber/[0.06] p-3.5">
               <TrendingUp size={16} className="mt-0.5 shrink-0 text-gravl-amber" aria-hidden />
               <div className="text-xs">
-                <p className="font-semibold text-white">Al ritmo actual llenás el plan en ~{weeksToFull} semanas</p>
+                <p className="font-semibold text-gravl-text">Al ritmo actual llenás el plan en ~{weeksToFull} semanas</p>
                 <p className="mt-0.5 text-gravl-text-secondary">Enterprise suma asientos ilimitados, SSO y API de datos. Evitá que nuevos socios queden sin acceso.</p>
                 <button onClick={() => addToast('Tu Customer Success Manager te contacta hoy para el upgrade.', 'info')} className="mt-2 font-bold text-gravl-amber hover:underline">
                   Hablar sobre Enterprise →
@@ -333,13 +333,13 @@ export default function PlanPage() {
           )}
 
           <dl className="mt-auto grid grid-cols-2 gap-3 pt-6 text-xs">
-            <div className="rounded-xl bg-white/[0.03] p-3">
+            <div className="rounded-xl bg-gravl-text/[0.03] p-3">
               <dt className="text-gravl-text-muted">MRR</dt>
-              <dd className="tabular-nums mt-1 text-base font-bold text-white">{fmtUsd(organization.mrrUsd)}</dd>
+              <dd className="tabular-nums mt-1 text-base font-bold text-gravl-text">{fmtUsd(organization.mrrUsd)}</dd>
             </div>
-            <div className="rounded-xl bg-white/[0.03] p-3">
+            <div className="rounded-xl bg-gravl-text/[0.03] p-3">
               <dt className="text-gravl-text-muted">Próxima factura</dt>
-              <dd className="mt-1 text-base font-bold text-white">1 dic.</dd>
+              <dd className="mt-1 text-base font-bold text-gravl-text">1 dic.</dd>
             </div>
           </dl>
         </Card>
@@ -351,12 +351,12 @@ export default function PlanPage() {
             {integrationCards.map((int) => {
               const connected = connectedIntegrations.has(int.id);
               return (
-                <div key={int.id} className={cn('flex items-center gap-3 rounded-xl border p-3.5', connected ? 'border-gravl-emerald/25 bg-gravl-emerald/[0.04]' : 'border-white/[0.07] bg-white/[0.02]')}>
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-xs font-black text-white">
+                <div key={int.id} className={cn('flex items-center gap-3 rounded-xl border p-3.5', connected ? 'border-gravl-emerald/25 bg-gravl-emerald/[0.04]' : 'border-gravl-text/[0.07] bg-gravl-text/[0.02]')}>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gravl-text/[0.1] bg-gravl-text/[0.04] text-xs font-black text-gravl-text">
                     {int.monogram}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-2 text-sm font-semibold text-white">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-gravl-text">
                       <span className="truncate">{int.name}</span>
                       <span className="text-[10px] font-medium text-gravl-text-muted">{int.category}</span>
                     </p>

@@ -82,14 +82,14 @@ export default function LiveFeed() {
           <li
             key={evt.id}
             className={cn(
-              'flex items-center justify-between gap-3 rounded-xl border border-white/[0.04] bg-white/[0.02] p-3 transition-colors hover:bg-white/[0.04]',
+              'flex items-center justify-between gap-3 rounded-xl border border-gravl-text/[0.04] bg-gravl-text/[0.02] p-3 transition-colors hover:bg-gravl-text/[0.04]',
               i === 0 && evt.id.startsWith('sim_') && 'animate-slide-up border-gravl-volt/20',
             )}
           >
             <div className="flex min-w-0 items-center gap-3">
               <Avatar name={evt.memberName} size={36} />
               <div className="min-w-0">
-                <p className="flex items-center gap-2 text-xs font-bold text-white">
+                <p className="flex items-center gap-2 text-xs font-bold text-gravl-text">
                   <span className="truncate">{evt.memberName}</span>
                   {evt.isPR && (
                     <Badge tone="amber" icon={Trophy}>
@@ -103,7 +103,7 @@ export default function LiveFeed() {
               </div>
             </div>
             <div className="shrink-0 text-right">
-              <p className="tabular-nums text-sm font-black text-gravl-volt">
+              <p className="gravl-num text-[22px] text-gravl-text">
                 {evt.weight} {evt.unit}
               </p>
               <p className="text-[10px] text-gravl-text-muted">{fmtRelative(evt.timestamp, now)}</p>
@@ -111,7 +111,7 @@ export default function LiveFeed() {
           </li>
         ))}
       </ul>
-      <p className="mt-3 border-t border-white/[0.06] pt-3 text-[11px] text-gravl-text-muted">
+      <p className="mt-3 border-t border-gravl-text/[0.06] pt-3 text-[11px] text-gravl-text-muted">
         Sincronizado vía WebSocket con GRAVL Core API · datos anonimizados a inicial de apellido.
       </p>
     </Card>

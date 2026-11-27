@@ -103,22 +103,22 @@ export function Modal({
           size === 'lg' && 'sm:max-w-3xl',
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-white/[0.07] px-6 pb-4 pt-5">
+        <div className="flex items-start justify-between gap-4 border-b border-gravl-text/[0.07] px-6 pb-4 pt-5">
           <div>
-            <h2 className="text-base font-bold text-white">{title}</h2>
+            <h2 className="text-base font-bold text-gravl-text">{title}</h2>
             {description && <div className="mt-1 text-xs text-gravl-text-secondary">{description}</div>}
           </div>
           <button
             data-close
             onClick={onClose}
             aria-label="Cerrar"
-            className="rounded-lg p-1.5 text-gravl-text-muted transition-colors hover:bg-white/[0.06] hover:text-white"
+            className="rounded-lg p-1.5 text-gravl-text-muted transition-colors hover:bg-gravl-text/[0.06] hover:text-gravl-text"
           >
             <X size={16} />
           </button>
         </div>
         <div className="overflow-y-auto px-6 py-5">{children}</div>
-        {footer && <div className="flex flex-col-reverse gap-2 border-t border-white/[0.07] px-6 py-4 sm:flex-row sm:justify-end">{footer}</div>}
+        {footer && <div className="flex flex-col-reverse gap-2 border-t border-gravl-text/[0.07] px-6 py-4 sm:flex-row sm:justify-end">{footer}</div>}
       </div>
     </div>,
     document.body,
@@ -155,25 +155,25 @@ export function Drawer({
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : 'Detalle'}
         tabIndex={-1}
-        className="absolute right-0 top-0 flex h-full w-full animate-slide-in-right flex-col border-l border-white/[0.1] bg-[#0C1017]/97 shadow-2xl backdrop-blur-xl"
+        className="absolute right-0 top-0 flex h-full w-full animate-slide-in-right flex-col border-l border-gravl-text/[0.1] bg-[#0C1017]/97 shadow-2xl backdrop-blur-xl"
         style={{ maxWidth: width }}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-white/[0.07] px-6 py-5">
+        <div className="flex items-start justify-between gap-4 border-b border-gravl-text/[0.07] px-6 py-5">
           <div className="min-w-0">
-            <div className="text-base font-bold text-white">{title}</div>
+            <div className="text-base font-bold text-gravl-text">{title}</div>
             {subtitle && <div className="mt-1 text-xs text-gravl-text-secondary">{subtitle}</div>}
           </div>
           <button
             data-close
             onClick={onClose}
             aria-label="Cerrar"
-            className="rounded-lg p-1.5 text-gravl-text-muted transition-colors hover:bg-white/[0.06] hover:text-white"
+            className="rounded-lg p-1.5 text-gravl-text-muted transition-colors hover:bg-gravl-text/[0.06] hover:text-gravl-text"
           >
             <X size={16} />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
-        {footer && <div className="border-t border-white/[0.07] px-6 py-4">{footer}</div>}
+        {footer && <div className="border-t border-gravl-text/[0.07] px-6 py-4">{footer}</div>}
       </div>
     </div>,
     document.body,

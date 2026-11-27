@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { coachClients, formCheckInbox } from '@gravl/mock-data';
-import { fmtRelative } from '@gravl/domain';
+import { coachTier, fmtRelative } from '@gravl/domain';
 import { cn } from '@gravl/ui';
 import { Avatar, Badge, Button, Card, CardHeader, EmptyState, Field, KpiTile, PageHeader, ProgressBar, Sparkline } from '@gravl/ui';
 import { Modal } from '@gravl/ui';
@@ -40,29 +40,29 @@ export default function CoachPage() {
     <div className="space-y-6">
       <PageHeader
         title="Coach Studio"
-        badge={<Badge tone="violet">Fuerza Studio</Badge>}
+        badge={<Badge tone="ink">Tramo {coachTier(24).label} · hasta {coachTier(24).upTo} clientes</Badge>}
         description="Tus clientes, su progreso de 1RM y su feedback de esfuerzo en un solo lugar. GRAVL ajusta las cargas diarias; vos te enfocás en coachear."
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiTile label="Clientes activos" value="24" delta="+3 este mes" hint="Capacidad del plan: 30" icon={Users} color="#A78BFA" />
-        <KpiTile label="Sesiones esta semana" value="18" delta="de 22 planificadas" deltaDirection="none" hint="Registradas en la app" icon={Calendar} color="#38BDF8" />
-        <KpiTile label="Adherencia promedio" value={`${avgAdherence}%`} delta="+4 pts vs. mes anterior" hint="Sesiones hechas / planificadas" icon={TrendingUp} color="#22C55E" />
-        <KpiTile label="Form checks" value={String(inbox.length)} delta={inbox.length ? 'pendientes de revisión' : 'al día'} deltaDirection="none" hint="Videos enviados por clientes" icon={Video} color="#F59E0B" />
+        <KpiTile label="Clientes activos" value="24" delta="+3 este mes" hint="Capacidad del plan: 30" icon={Users} color="var(--color-gravl-violet)" />
+        <KpiTile label="Sesiones esta semana" value="18" delta="de 22 planificadas" deltaDirection="none" hint="Registradas en la app" icon={Calendar} color="var(--color-gravl-cyan)" />
+        <KpiTile label="Adherencia promedio" value={`${avgAdherence}%`} delta="+4 pts vs. mes anterior" hint="Sesiones hechas / planificadas" icon={TrendingUp} color="var(--color-gravl-emerald)" />
+        <KpiTile label="Form checks" value={String(inbox.length)} delta={inbox.length ? 'pendientes de revisión' : 'al día'} deltaDirection="none" hint="Videos enviados por clientes" icon={Video} color="var(--color-gravl-amber)" />
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
         <Card className="p-5 sm:p-6 xl:col-span-5">
-          <CardHeader icon={Video} iconColor="#F59E0B" title="Form checks" subtitle="Ordenados por antigüedad. Respondé en menos de 24 h." />
+          <CardHeader icon={Video} iconColor="var(--color-gravl-amber)" title="Form checks" subtitle="Ordenados por antigüedad. Respondé en menos de 24 h." />
           <ul className="mt-4 space-y-2">
             {inbox.length === 0 && <EmptyState icon={CheckCircle2} title="Inbox en cero" description="Respondiste todos los videos. 💪" />}
             {inbox.map((f) => (
-              <li key={f.id} className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                <span className="flex h-12 w-16 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-white/[0.08] to-white/[0.02]">
-                  <PlayCircle size={20} className="text-white/70" aria-hidden />
+              <li key={f.id} className="flex items-center gap-3 rounded-xl border border-gravl-text/[0.06] bg-gravl-text/[0.02] p-3">
+                <span className="flex h-12 w-16 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-gravl-text/[0.08] to-gravl-text/[0.02]">
+                  <PlayCircle size={20} className="text-gravl-text/70" aria-hidden />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-white">{f.clientName}</p>
+                  <p className="truncate text-sm font-semibold text-gravl-text">{f.clientName}</p>
                   <p className="truncate text-[11px] text-gravl-text-secondary">
                     {f.exercise} · {f.load} · <span className="text-gravl-text-muted">{fmtRelative(f.submittedAt)}</span>
                   </p>
@@ -77,13 +77,13 @@ export default function CoachPage() {
         </Card>
 
         <Card glow="crimson" className="p-5 sm:p-6 xl:col-span-7">
-          <CardHeader icon={AlertTriangle} iconColor="#EF4444" title="Clientes que necesitan tu atención" subtitle="Adherencia < 70% o fuerza estimada en baja." />
+          <CardHeader icon={AlertTriangle} iconColor="var(--color-gravl-crimson)" title="Clientes que necesitan tu atención" subtitle="Adherencia < 70% o fuerza estimada en baja." />
           <ul className="mt-4 space-y-2">
             {flagged.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-gravl-crimson/15 bg-gravl-crimson/[0.04] p-3">
                 <Avatar name={c.name} size={36} />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-white">{c.name}</p>
+                  <p className="text-sm font-semibold text-gravl-text">{c.name}</p>
                   <p className="text-[11px] text-gravl-text-secondary">
                     Adherencia {c.adherence}% · e1RM total {c.e1rmTrend[0]} → {c.e1rmTrend[c.e1rmTrend.length - 1]} kg · “{c.lastFeedback}”
                   </p>
@@ -98,12 +98,12 @@ export default function CoachPage() {
       </div>
 
       <Card className="p-5 sm:p-6">
-        <CardHeader icon={GraduationCap} iconColor="#A78BFA" title="Clientes" subtitle="1RM actuales y tendencia de fuerza total estimada (6 semanas)." />
+        <CardHeader icon={GraduationCap} iconColor="var(--color-gravl-violet)" title="Clientes" subtitle="1RM actuales y tendencia de fuerza total estimada (6 semanas)." />
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[900px]">
             <caption className="sr-only">Clientes del coach</caption>
             <thead>
-              <tr className="border-b border-white/[0.06] text-left text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">
+              <tr className="border-b border-gravl-text/[0.06] text-left text-[10px] font-bold uppercase tracking-wider text-gravl-text-muted">
                 <th scope="col" className="px-3 py-3">Cliente</th>
                 <th scope="col" className="px-3 py-3">Plan</th>
                 <th scope="col" className="px-3 py-3">SQ / BP / DL</th>
@@ -118,33 +118,33 @@ export default function CoachPage() {
               {coachClients.map((c) => {
                 const up = c.e1rmTrend[c.e1rmTrend.length - 1] >= c.e1rmTrend[0];
                 return (
-                  <tr key={c.id} className="border-b border-white/[0.03] hover:bg-white/[0.02]">
+                  <tr key={c.id} className="border-b border-gravl-text/[0.03] hover:bg-gravl-text/[0.02]">
                     <td className="px-3 py-3">
                       <span className="flex items-center gap-2.5">
                         <Avatar name={c.name} size={30} />
                         <span className="min-w-0">
-                          <span className="block text-sm font-semibold text-white">{c.name}</span>
+                          <span className="block text-sm font-semibold text-gravl-text">{c.name}</span>
                           <span className="block max-w-[180px] truncate text-[10px] italic text-gravl-text-muted">“{c.lastFeedback}”</span>
                         </span>
                       </span>
                     </td>
                     <td className="px-3 py-3 text-xs text-gravl-text-secondary">{c.plan}</td>
-                    <td className="tabular-nums px-3 py-3 text-xs font-semibold text-white">
+                    <td className="tabular-nums px-3 py-3 text-xs font-semibold text-gravl-text">
                       {c.squat1RM} / {c.bench1RM} / {c.deadlift1RM}
                       <span className="ml-1.5 text-gravl-text-muted">= {sumE1rm(c)} kg</span>
                     </td>
                     <td className="px-3 py-3">
-                      <Sparkline points={c.e1rmTrend} color={up ? '#22C55E' : '#EF4444'} width={80} height={26} />
+                      <Sparkline points={c.e1rmTrend} color={up ? 'var(--color-gravl-emerald)' : 'var(--color-gravl-crimson)'} width={80} height={26} />
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex w-28 items-center gap-2">
-                        <ProgressBar value={c.adherence} color={c.adherence >= 85 ? '#22C55E' : c.adherence >= 70 ? '#F59E0B' : '#EF4444'} label={`Adherencia ${c.adherence}%`} />
+                        <ProgressBar value={c.adherence} color={c.adherence >= 85 ? 'var(--color-gravl-emerald)' : c.adherence >= 70 ? 'var(--color-gravl-amber)' : 'var(--color-gravl-crimson)'} label={`Adherencia ${c.adherence}%`} />
                         <span className="tabular-nums w-8 text-right text-[11px] text-gravl-text-secondary">{c.adherence}%</span>
                       </div>
                     </td>
                     <td className="px-3 py-3"><Badge tone={rpeTone[c.rpe]}>{c.rpe}</Badge></td>
                     <td className="px-3 py-3">
-                      <span className="flex items-center gap-1 text-xs font-semibold text-white">
+                      <span className="flex items-center gap-1 text-xs font-semibold text-gravl-text">
                         <Flame size={12} className="text-gravl-volt" aria-hidden />
                         <span className="tabular-nums">{c.streak} sem.</span>
                       </span>
@@ -162,8 +162,8 @@ export default function CoachPage() {
         <CardHeader icon={Layers} title="Plantillas de mesociclo" subtitle="Asigná un bloque y el motor determinístico de 1RM y fatiga de GRAVL ajusta las cargas día a día." />
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
           {templates.map((t) => (
-            <div key={t.name} className="flex flex-col rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
-              <p className="flex items-center gap-2 text-sm font-bold text-white">
+            <div key={t.name} className="flex flex-col rounded-xl border border-gravl-text/[0.07] bg-gravl-text/[0.02] p-4">
+              <p className="flex items-center gap-2 text-sm font-bold text-gravl-text">
                 <Dumbbell size={15} className="text-gravl-violet" aria-hidden /> {t.name}
               </p>
               <p className="mt-1 text-xs text-gravl-text-secondary">{t.focus}</p>
@@ -190,8 +190,8 @@ export default function CoachPage() {
           </>
         }
       >
-        <div className="flex aspect-video items-center justify-center rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.06] to-transparent">
-          <PlayCircle size={40} className="text-white/60" aria-hidden />
+        <div className="flex aspect-video items-center justify-center rounded-xl border border-gravl-text/[0.08] bg-gradient-to-br from-gravl-text/[0.06] to-transparent">
+          <PlayCircle size={40} className="text-gravl-text/60" aria-hidden />
         </div>
         {reviewing && <p className="mt-3 text-xs italic text-gravl-text-secondary">“{reviewing.note}”</p>}
         <div className="mt-4 flex flex-wrap gap-1.5">
@@ -199,7 +199,7 @@ export default function CoachPage() {
             <button
               key={t}
               onClick={() => setFeedback((f) => (f ? `${f} ${t}.` : `${t}.`))}
-              className={cn('rounded-full border border-white/[0.1] px-2.5 py-1 text-[11px] font-semibold text-gravl-text-secondary hover:border-gravl-volt/40 hover:text-white')}
+              className={cn('rounded-full border border-gravl-text/[0.1] px-2.5 py-1 text-[11px] font-semibold text-gravl-text-secondary hover:border-gravl-volt/40 hover:text-gravl-text')}
             >
               + {t}
             </button>
