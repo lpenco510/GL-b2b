@@ -105,6 +105,12 @@
   [data-theme='light'] :focus-visible { outline-color: #080e18; }
   button:not(:disabled), [role='button']:not([aria-disabled='true']), select { cursor: pointer; }
   select option { background: var(--g-surface); color: var(--g-fg); }
+  /* Edge/Chrome en Windows agregan su propio "ojo" y "x" a los campos de contraseña:
+     los ocultamos para que quede un solo control (el nuestro). */
+  input[type='password']::-ms-reveal,
+  input[type='password']::-ms-clear { display: none; }
+  input::-webkit-credentials-auto-fill-button,
+  input::-webkit-contacts-auto-fill-button { visibility: hidden; display: none !important; pointer-events: none; position: absolute; right: 0; }
   input[type='range'] { accent-color: #080e18; }
   [data-theme='dark'] input[type='range'] { accent-color: #d2fe0b; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
