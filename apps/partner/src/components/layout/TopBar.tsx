@@ -173,7 +173,7 @@ export default function TopBar() {
 
       <div className="flex-1" />
 
-      <span className="hidden rounded-md bg-gravl-ink px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-gravl-lime xl:inline dark:bg-gravl-lime dark:text-gravl-ink" title="Todos los números de esta demo son simulados">
+      <span className="hidden shrink-0 whitespace-nowrap rounded-md bg-gravl-ink px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-gravl-lime xl:inline dark:bg-gravl-lime dark:text-gravl-ink" title="Todos los números de esta demo son simulados">
         Demo · datos simulados
       </span>
 

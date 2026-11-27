@@ -15,6 +15,15 @@ db/           Esquema PostgreSQL propuesto para el Partner API (con aislamiento 
 docs/          Quién es quién, lógica de negocio, arquitectura, mercados, identidad, roadmap, design system
 ```
 
+## Demo online
+
+| | URL | Acceso |
+| --- | --- | --- |
+| Portal de partners | https://gravl-partners.vercel.app | contraseña `DEMO_PASSWORD` |
+| Consola interna | https://gravl-console.vercel.app | contraseña `CONSOLE_PASSWORD` (distinta) |
+
+Las contraseñas se cambian en Vercel → proyecto → Settings → Environment Variables, y después hay que hacer *Redeploy*. Ver `docs/08-seguridad.md`.
+
 ## Empezá por acá
 
 0. [`docs/00-quien-es-quien.md`](docs/00-quien-es-quien.md): los perfiles explicados en una página.
@@ -24,6 +33,7 @@ docs/          Quién es quién, lógica de negocio, arquitectura, mercados, ide
 4. [`docs/04-identidad-y-datos.md`](docs/04-identidad-y-datos.md): la cuenta es del socio; cómo se vincula con la app actual.
 5. [`docs/05-roadmap.md`](docs/05-roadmap.md): próximas versiones y **preguntas abiertas**.
 6. [`docs/06-design-system.md`](docs/06-design-system.md): reglas visuales de GRAVL.
+8. [`docs/08-seguridad.md`](docs/08-seguridad.md): cómo está protegido y qué falta para producción.
 7. [`docs/07-integracion-gravl.md`](docs/07-integracion-gravl.md): qué se conecta hoy con la API de GRAVL y qué hay que pedir.
 
 **Para mandar al equipo de GRAVL:** [`docs/para-el-equipo-gravl.md`](docs/para-el-equipo-gravl.md) (corto, en criollo).
