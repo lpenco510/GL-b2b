@@ -1,31 +1,27 @@
 {
-  "name": "gravl-partner-os",
-  "version": "0.1.0",
+  "name": "gravl-b2b",
+  "version": "0.2.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+  "description": "GRAVL B2B: portal de partners, consola interna y paquetes de dominio compartidos.",
+  "engines": {
+    "node": ">=20.9"
   },
-  "dependencies": {
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.78.0",
-    "next": "16.4.6",
-    "qrcode": "^1.5.4",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "recharts": "^3.11.1"
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n partner,console -c \"#C6FF00,#38BDF8\" \"npm:dev:partner\" \"npm:dev:console\"",
+    "dev:partner": "npm run dev -w @gravl/partner",
+    "dev:console": "npm run dev -w @gravl/console",
+    "build": "npm run build -w @gravl/partner && npm run build -w @gravl/console",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test -w @gravl/domain"
   },
   "devDependencies": {
-    "@tailwindcss/turbopack": "4.3.3",
-    "@types/node": "^20",
-    "@types/qrcode": "^1.5.5",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.4.6",
-    "tailwindcss": "4.3.3",
-    "typescript": "^5"
+    "concurrently": "9.1.2",
+    "typescript": "^5",
+    "tsx": "4.20.6"
   }
 }

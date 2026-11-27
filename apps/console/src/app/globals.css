@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "@gravl/ui/tokens.css";
+
+/* Tailwind escanea también las primitivas compartidas. */
+@source "../../../../packages/ui/src";
